@@ -11,9 +11,9 @@ for some ϵ > 0. Define the function `F(z; ϵ)` to return the left hand side of 
 system of equations, where `z = [x; y; s]`.
 """
 struct PrimalDualMCP{T1,T2}
-    "A callable `F(z; ϵ)` which computes the KKT error in the primal-dual system."
+    "A callable `F(x, y, s; ϵ)` which computes the KKT error in the primal-dual system."
     F::T1
-    "A callable `∇F(z; ϵ)` which stores the Jacobian of the KKT error wrt z."
+    "A callable `∇F(x, y, s; ϵ)` which stores the Jacobian of the KKT error wrt z."
     ∇F::T2
 end
 
