@@ -15,6 +15,6 @@ A typical value of τ is 0.995. Once we converge to ||F(z; \epsilon)|| ≤ ϵ,
 we typically decrease ϵ by a factor of 0.1 or 0.2, with smaller values chosen
 when the previous subproblem is solved in fewer iterations.
 """
-function solve(::InteriorPoint, mcp::MCP, x₀, y₀)
+function solve(::InteriorPoint, mcp::PrimalDualMCP, x₀, y₀)
     # TODO!
 end
