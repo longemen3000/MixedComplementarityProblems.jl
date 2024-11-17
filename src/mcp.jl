@@ -15,6 +15,29 @@ struct PrimalDualMCP{T1,T2}
     F::T1
     "A callable `∇F(x, y, s; ϵ)` which stores the Jacobian of the KKT error wrt z."
     ∇F::T2
+    "Dimension of unconstrained variable."
+    unconstrained_dimension::Int
+    "Dimension of constrained variable."
+    constrained_dimension::Int
+end
+
+"Helper to construct a PrimalDualMCP from callable functions `G(.)` and `H(.)`."
+function to_symbolic_mcp(
+    G,
+    H,
+    unconstrained_dimension,
+    constrained_dimension,
+    backend = SymbolicUtils.SymbolicsBackend(),
+    backend_options = (;)
+)
+    x_symbolic = SymbolicUtils.make_variables(backend, :x, unconstrained_dimension)
+    y_symbolic = SymbolicUtils.make_variables(backend, :y, constrained_dimension)
+    s_symbolic = SymbolicUtils.make_variables(backend, :s, constrained_dimension)
+    G_symbolic = G(x_symbolic, y_symbolic)
+    H_symbolic = H(x_symbolic, y_symbolic)
+
+    PrimalDualMCP(
+        G_symbolic, H_symbolic, x_symbolic, y_symbolic, backend, backend_options)
 end
 
 "Construct a PrimalDualMCP from symbolic expressions of G(.) and H(.)."
@@ -66,5 +89,5 @@ function PrimalDualMCP(
         (x, y, s; ϵ) -> _∇F([x; y; s; ϵ])
     end
 
-    PrimalDualMCP(F, ∇F)
+    PrimalDualMCP(F, ∇F, length(x_symbolic), length(y_symbolic))
 end
