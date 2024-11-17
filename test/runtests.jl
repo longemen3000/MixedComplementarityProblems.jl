@@ -12,8 +12,8 @@ using MCPSolver
 
 @testset "QPTestProblem" begin
     M = [2 1; 1 2]
-    A = [1.0 0.0; 0.0 1.0]
-    b = [1.0; 1.0]
+    A = [1 0; 0 1]
+    b = [1; 1]
 
     G(x, y) = M * x - A' * y
     H(x, y) = A * x - b

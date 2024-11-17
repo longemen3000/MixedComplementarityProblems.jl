@@ -28,14 +28,14 @@ function solve(
     y = y₀
     s = ones(length(y))
 
-    ϵ = 10.0
+    ϵ = 1.0
     kkt_error = Inf
     while kkt_error > tol && ϵ > tol
         iters = 1
         while kkt_error > ϵ
             # Compute the Newton step.
             F = mcp.F(x, y, s; ϵ)
-            δz = -(mcp.∇F(x, y, s; ϵ) + ϵ*I) \ F
+            δz = -(mcp.∇F(x, y, s; ϵ) + I) \ F
 
             # Fraction to the boundary linesearch.
             δx = @view δz[1:mcp.unconstrained_dimension]
@@ -57,13 +57,8 @@ function solve(
 
             kkt_error = maximum(abs.(F))
             iters += 1
-            @info iters, s
         end
 
-        @info x
-        @info y
-        @info s
-        @info ϵ
         ϵ *= 1 - exp(-iters)
     end
 

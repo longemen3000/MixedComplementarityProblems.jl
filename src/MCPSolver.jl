@@ -3,13 +3,11 @@ module MCPSolver
 using SparseArrays: SparseArrays
 using FastDifferentiation: FastDifferentiation as FD
 using Symbolics: Symbolics
-using LinearAlgebra: I, norm
+using LinearAlgebra: I, norm, eigvals
 
 using Infiltrator
 
 include("SymbolicUtils.jl")
-include("sparse_utils.jl")
-
 include("mcp.jl")
 include("solver.jl")
 

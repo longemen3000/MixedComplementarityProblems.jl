@@ -6,7 +6,7 @@ functions G(.) and H(.) such that
 The primal-dual system arises when we introduce slack variable `s` and set
                              G(x, y)     = 0
                              H(x, y) - s = 0
-                             sᵀy - ϵ     = 0
+                             s ⦿ y - ϵ   = 0
 for some ϵ > 0. Define the function `F(z; ϵ)` to return the left hand side of this
 system of equations, where `z = [x; y; s]`.
 """
@@ -57,7 +57,7 @@ function PrimalDualMCP(
     F_symbolic = [
         G_symbolic;
         H_symbolic - s_symbolic;
-        sum(s_symbolic .* y_symbolic) - ϵ_symbolic
+        s_symbolic .* y_symbolic .- ϵ_symbolic
     ]
 
     F = let
@@ -79,12 +79,6 @@ function PrimalDualMCP(
             in_place = false,
             backend_options,
         )
-
-        # rows, cols, _ = SparseArrays.findnz(∇F_symbolic)
-        # constant_entries = get_constant_entries(∇F_symbolic, z_symbolic)
-        # SparseFunction(rows, cols, size(∇F_symbolic), constant_entries) do x, y, s, ϵ
-        #     _∇F([x; y; z; ϵ])
-        # end
 
         (x, y, s; ϵ) -> _∇F([x; y; s; ϵ])
     end
