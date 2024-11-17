@@ -34,8 +34,9 @@ function solve(
         iters = 1
         while kkt_error > ϵ
             # Compute the Newton step.
+            # TODO! Can add some adaptive regularization.
             F = mcp.F(x, y, s; ϵ)
-            δz = -(mcp.∇F(x, y, s; ϵ) + I) \ F
+            δz = -mcp.∇F(x, y, s; ϵ) \ F
 
             # Fraction to the boundary linesearch.
             δx = @view δz[1:mcp.unconstrained_dimension]
