@@ -1,7 +1,3 @@
-using Test: @testset, @test
-using MCPSolver
-
-
 """ Test for the following QP:
                            min_x 0.5 xᵀ M x
                            s.t.  Ax - b ≥ 0.
@@ -9,16 +5,23 @@ Taking `y ≥ 0` as a Lagrange multiplier, we obtain the KKT conditions:
                              G(x, y) = Mx - Aᵀy = 0
                              0 ≤ y ⟂ H(x, y) = Ax - b ≥ 0.
 """
+
+using Test: @testset, @test
+using MCPSolver
+
+
 @testset "QPTestProblem" begin
-    M = [2, 1; 1, 2]
-    A = [1, 0.3]
-    b = 1.1
+    M = [2 1; 1 2]
+    A = [1.0 0.0; 0.0 1.0]
+    b = [1.0; 1.0]
 
     G(x, y) = M * x - A' * y
     H(x, y) = A * x - b
 
-    mcp = MCPSolver.to_symbolic_mcp(G, H, 2, 1)
+    mcp = MCPSolver.to_symbolic_mcp(G, H, size(M, 1), length(b))
     sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp)
+
+    println(sol)
 
     @test all(abs.(G(sol.x, sol.y)) .≤ 1e-3)
     @test all(H(sol.x, sol.y) .≥ 0)

@@ -51,7 +51,7 @@ function PrimalDualMCP(
 ) where {T<:Union{FD.Node,Symbolics.Num}}
     # Create symbolic slack variable `s` and parameter `ϵ`.
     s_symbolic = SymbolicUtils.make_variables(backend, :s, length(y_symbolic))
-    ϵ_symbolic = SymbolicUtils.make_variables(backend, :ϵ, 1)
+    ϵ_symbolic = only(SymbolicUtils.make_variables(backend, :ϵ, 1))
     z_symbolic = [x_symbolic; y_symbolic; s_symbolic]
 
     F_symbolic = [
