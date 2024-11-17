@@ -26,7 +26,7 @@ function to_symbolic_mcp(
     G,
     H,
     unconstrained_dimension,
-    constrained_dimension,
+    constrained_dimension;
     backend = SymbolicUtils.SymbolicsBackend(),
     backend_options = (;)
 )
@@ -45,7 +45,7 @@ function PrimalDualMCP(
     G_symbolic::Vector{T},
     H_symbolic::Vector{T},
     x_symbolic::Vector{T},
-    y_symbolic::Vector{T},
+    y_symbolic::Vector{T};
     backend = SymbolicUtils.SymbolicsBackend(),
     backend_options = (;)
 ) where {T<:Union{FD.Node,Symbolics.Num}}
@@ -84,4 +84,31 @@ function PrimalDualMCP(
     end
 
     PrimalDualMCP(F, ∇F, length(x_symbolic), length(y_symbolic))
+end
+
+"""Construct a PrimalDualMCP from K(z) ⟂ z̲ ≤ z ≤ z̅.
+NOTE: Assumes that all upper bounds are Inf, and lower bounds are either
+-Inf or 0.
+"""
+function PrimalDualMCP(
+    K_symbolic::Vector{T},
+    z_symbolic::Vector{T},
+    lower_bounds::Vector,
+    upper_bounds::Vector;
+    backend_options = (;)
+)
+    assert(
+        all(isinf.(lower_bounds)) &&
+        all(isinf.(upper_bounds) .|| upper_bounds .== 0)
+    )
+
+    unconstrained_indices = findall(isinf, upper_bounds)
+    constrained_indices = findall(!isinf, upper_bounds)
+
+    G_symbolic = K_symbolic[unconstrained_indices]
+    H_symbolic = K_symbolic[constrained_indices]
+    x_symbolic = z_symbolic[unconstrained_indices]
+    y_symbolic = z_symbolic[constrained_indices]
+
+    PrimalDualMCP(G_symbolic, H_symbolic, x_symbolic, y_symbolic; backend_options)
 end
