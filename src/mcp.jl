@@ -37,7 +37,7 @@ function to_symbolic_mcp(
     H_symbolic = H(x_symbolic, y_symbolic)
 
     PrimalDualMCP(
-        G_symbolic, H_symbolic, x_symbolic, y_symbolic, backend, backend_options)
+        G_symbolic, H_symbolic, x_symbolic, y_symbolic; backend, backend_options)
 end
 
 "Construct a PrimalDualMCP from symbolic expressions of G(.) and H(.)."
