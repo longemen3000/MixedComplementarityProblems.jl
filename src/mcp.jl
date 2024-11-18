@@ -96,7 +96,7 @@ function PrimalDualMCP(
     lower_bounds::Vector,
     upper_bounds::Vector;
     backend_options = (;)
-)
+    ) where {T<:Union{FD.Node,Symbolics.Num}}
     assert(
         all(isinf.(lower_bounds)) &&
         all(isinf.(upper_bounds) .|| upper_bounds .== 0)
