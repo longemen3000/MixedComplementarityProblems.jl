@@ -86,7 +86,26 @@ function PrimalDualMCP(
     PrimalDualMCP(F, ∇F, length(x_symbolic), length(y_symbolic))
 end
 
-"""Construct a PrimalDualMCP from K(z) ⟂ z̲ ≤ z ≤ z̅.
+"""Construct a PrimalDualMCP from `K(z) ⟂ z̲ ≤ z ≤ z̅`, where `K` is callable.
+NOTE: Assumes that all upper bounds are Inf, and lower bounds are either
+-Inf or 0.
+"""
+function PrimalDualMCP(
+    K,
+    lower_bounds::Vector,
+    upper_bounds::Vector;
+    backend = SymbolicUtils.SymbolicsBackend(),
+    backend_options = (;)
+)
+    z_symbolic = SymbolicUtils.make_variables(backend, :z, length(lower_bounds))
+    K_symbolic = K(z_symbolic)
+
+    PrimalDualMCP(
+        K_symbolic, z_symbolic, lower_bounds, upper_bounds; backend_options)
+end
+
+
+"""Construct a PrimalDualMCP from symbolic `K(z) ⟂ z̲ ≤ z ≤ z̅`.
 NOTE: Assumes that all upper bounds are Inf, and lower bounds are either
 -Inf or 0.
 """
