@@ -22,7 +22,7 @@ function solve(
     mcp::PrimalDualMCP;
     x₀ = zeros(mcp.unconstrained_dimension),
     y₀ = ones(mcp.constrained_dimension),
-    tol = 1e-4
+    tol = 1e-4,
 )
     x = x₀
     y = y₀
@@ -39,9 +39,11 @@ function solve(
             δz = -mcp.∇F(x, y, s; ϵ) \ F
 
             # Fraction to the boundary linesearch.
-            δx = @view δz[1:mcp.unconstrained_dimension]
-            δy = @view δz[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
-            δs = @view δz[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
+            δx = @view δz[1:(mcp.unconstrained_dimension)]
+            δy =
+                @view δz[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
+            δs =
+                @view δz[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
 
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol)
             α_y = fraction_to_the_boundary_linesearch(y, δy; tol)

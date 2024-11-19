@@ -108,7 +108,10 @@ Computes the symbolic Jacobian of `f_symbolic` with respect to `x_symbolic` in a
 """
 function sparse_jacobian end
 
-function sparse_jacobian(f_symbolic::Vector{T}, x_symbolic::Vector{T}) where {T<:Symbolics.Num}
+function sparse_jacobian(
+    f_symbolic::Vector{T},
+    x_symbolic::Vector{T},
+) where {T<:Symbolics.Num}
     Symbolics.sparsejacobian(f_symbolic, x_symbolic)
 end
 
