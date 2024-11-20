@@ -7,7 +7,9 @@ Taking `y ≥ 0` as a Lagrange multiplier, we obtain the KKT conditions:
 """
 
 using Test: @testset, @test
+
 using MCPSolver
+using BlockArrays: BlockArray, Block, mortar, blocks
 
 @testset "QPTestProblem" begin
     M = [2 1; 1 2]
@@ -51,4 +53,42 @@ using MCPSolver
 
         check_solution(sol)
     end
+end
+
+@testset "ParametricGameTests" begin
+    lim = 0.5
+
+    game = ParametricGame(;
+        test_point = mortar([[1, 1], [1, 1]]),
+        test_parameter = mortar([[1, 1], [1, 1]]),
+        problems = [
+            OptimizationProblem(;
+                objective = (x, θi) -> sum((x[Block(1)] - θi) .^ 2),
+                private_inequality = (xi, θi) -> -abs.(xi) .+ lim,
+            ),
+            OptimizationProblem(;
+                objective = (x, θi) -> sum((x[Block(2)] - θi) .^ 2),
+                private_inequality = (xi, θi) -> -abs.(xi) .+ lim,
+            ),
+        ],
+    )
+
+
+    θ = mortar([[-1, 0], [1, 1]])
+    (; primals, variables, kkt_error) = solve(
+        game;
+        θ,
+        tol = 1e-4,
+    )
+
+    @test isapprox.(
+        primals[1],
+        [max(-lim, θ[Block(1)][1]), min(lim, θ[Block(1)][2])],
+        atol = tol,
+    )
+    @test isapprox.(
+        primals[2],
+        [max(-lim, θ[Block(2)][1]), min(lim, θ[Block(2)][2])],
+        atol = tol,
+    )
 end

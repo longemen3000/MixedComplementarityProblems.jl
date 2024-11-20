@@ -1,8 +1,6 @@
 abstract type SolverType end
 struct InteriorPoint <: SolverType end
 
-using Infiltrator: @infiltrate
-
 """ Basic interior point solver, based on Nocedal & Wright, ch. 19.
 Computes step directions `δz` by solving the relaxed primal-dual system, i.e.
                          ∇F(z; ϵ) δz = -F(z; ϵ).
