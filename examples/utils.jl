@@ -251,7 +251,7 @@ end
 "Receding horizon strategy that supports warm starting."
 Base.@kwdef mutable struct WarmStartRecedingHorizonStrategy
     game::TrajectoryGame
-    mcp::PrimalDualMCP
+    parametric_game::ParametricGame
     receding_horizon_strategy::Any = nothing
     time_last_updated::Int = 0
     turn_length::Int
@@ -274,7 +274,7 @@ function (strategy::WarmStartRecedingHorizonStrategy)(state, time)
                 strategy.horizon,
                 pack_parameters(state, strategy.parameters),
                 strategy;
-                strategy.mcp,
+                strategy.parametric_game,
             )
         strategy.time_last_updated = time
         time_along_plan = 1

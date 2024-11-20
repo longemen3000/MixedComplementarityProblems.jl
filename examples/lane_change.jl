@@ -96,8 +96,6 @@ function main(;
     num_lanes = 2,
     lane_width = 2,
     num_sim_steps = 150,
-    gradient_steps_per_turn = 5,
-    observation_noise_stddev = 0.1,
 )
     (; environment, lane_centers) =
         setup_road_environment(; num_lanes, lane_width, height)
@@ -107,7 +105,7 @@ function main(;
     # P1 wants to stay in the left lane, and P2 wants to move from the
     # right to the left lane.
     lane_preferences = mortar([[lane_centers[1]], [lane_centers[1]]])
-    mcp = build_mcp(; game, horizon, params_per_player = 1)
+    parametric_game = build_parametric_game(; game, horizon, params_per_player = 1)
 
     # Simulate the ground truth.
     turn_length = 3

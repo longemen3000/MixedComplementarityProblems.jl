@@ -13,39 +13,41 @@ using MCPSolver
     M = [2 1; 1 2]
     A = [1 0; 0 1]
     b = [1; 1]
+    θ = zeros(2)
 
-    G(x, y) = M * x - A' * y
-    H(x, y) = A * x - b
-    F(z) = begin
+    G(x, y; θ) = M * x - A' * y - θ
+    H(x, y; θ) = A * x - b
+    K(z; θ) = begin
         x = z[1:size(M, 1)]
         y = z[(size(M, 1) + 1):end]
 
-        [G(x, y); H(x, y)]
+        [G(x, y; θ); H(x, y; θ)]
     end
 
     function check_solution(sol)
-        @test all(abs.(G(sol.x, sol.y)) .≤ 1e-3)
-        @test all(H(sol.x, sol.y) .≥ 0)
+        @test all(abs.(G(sol.x, sol.y; θ)) .≤ 1e-3)
+        @test all(H(sol.x, sol.y; θ) .≥ 0)
         @test all(sol.y .≥ 0)
-        @test sum(sol.y .* H(sol.x, sol.y)) ≤ 1e-3
+        @test sum(sol.y .* H(sol.x, sol.y; θ)) ≤ 1e-3
         @test all(sol.s .≤ 1e-3)
         @test sol.kkt_error ≤ 1e-3
     end
 
     @testset "BasicCallableConstructor" begin
-        mcp = MCPSolver.to_symbolic_mcp(G, H, size(M, 1), length(b))
-        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp)
+        mcp = MCPSolver.PrimalDualMCP(G, H, size(M, 1), length(b), size(M, 1))
+        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 
         check_solution(sol)
     end
 
     @testset "AlternativeCallableConstructor" begin
-        mcp = MCPSolver.PrimalDualMCP(
-            F,
+       mcp = MCPSolver.PrimalDualMCP(
+            K,
             [fill(-Inf, size(M, 1)); fill(0, length(b))],
             fill(Inf, size(M, 1) + length(b)),
+            size(M, 1)
         )
-        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp)
+        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 
         check_solution(sol)
     end

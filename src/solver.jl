@@ -20,6 +20,7 @@ when the previous subproblem is solved in fewer iterations.
 function solve(
     ::InteriorPoint,
     mcp::PrimalDualMCP;
+    θ,
     x₀ = zeros(mcp.unconstrained_dimension),
     y₀ = ones(mcp.constrained_dimension),
     tol = 1e-4,
@@ -35,8 +36,8 @@ function solve(
         while kkt_error > ϵ
             # Compute the Newton step.
             # TODO! Can add some adaptive regularization.
-            F = mcp.F(x, y, s; ϵ)
-            δz = -mcp.∇F(x, y, s; ϵ) \ F
+            F = mcp.F(x, y, s; θ, ϵ)
+            δz = -mcp.∇F(x, y, s; θ, ϵ) \ F
 
             # Fraction to the boundary linesearch.
             δx = @view δz[1:(mcp.unconstrained_dimension)]
