@@ -34,24 +34,24 @@ using BlockArrays: BlockArray, Block, mortar, blocks
         @test sol.kkt_error ≤ 1e-3
     end
 
-    # @testset "BasicCallableConstructor" begin
-    #     mcp = MCPSolver.PrimalDualMCP(G, H, size(M, 1), length(b), size(M, 1))
-    #     sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
+    @testset "BasicCallableConstructor" begin
+        mcp = MCPSolver.PrimalDualMCP(G, H, size(M, 1), length(b), size(M, 1))
+        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 
-    #     check_solution(sol)
-    # end
+        check_solution(sol)
+    end
 
-    # @testset "AlternativeCallableConstructor" begin
-    #    mcp = MCPSolver.PrimalDualMCP(
-    #         K,
-    #         [fill(-Inf, size(M, 1)); fill(0, length(b))],
-    #         fill(Inf, size(M, 1) + length(b)),
-    #         size(M, 1)
-    #     )
-    #     sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
+    @testset "AlternativeCallableConstructor" begin
+       mcp = MCPSolver.PrimalDualMCP(
+            K,
+            [fill(-Inf, size(M, 1)); fill(0, length(b))],
+            fill(Inf, size(M, 1) + length(b)),
+            size(M, 1)
+        )
+        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 
-    #     check_solution(sol)
-    # end
+        check_solution(sol)
+    end
 end
 
 @testset "ParametricGameTests" begin
