@@ -47,21 +47,19 @@ function ParametricGame(;
     x = SymbolicUtils.make_variables(backend, :x, sum(dims.x)) |> to_blockvector(dims.x)
     λ = SymbolicUtils.make_variables(backend, :λ, sum(dims.λ)) |> to_blockvector(dims.λ)
     μ = SymbolicUtils.make_variables(backend, :μ, sum(dims.μ)) |> to_blockvector(dims.μ)
-
     λ̃ = SymbolicUtils.make_variables(backend, :λ̃, dims.λ̃)
     μ̃ = SymbolicUtils.make_variables(backend, :μ̃, dims.μ̃)
-
     θ = SymbolicUtils.make_variables(backend, :θ, sum(dims.θ)) |> to_blockvector(dims.θ)
 
     # Build symbolic expressions for objectives and constraints.
     fs = map(problems, blocks(θ)) do p, θi
         p.objective(x, θi)
     end
-    gs = map(problems, blocks(x), blocks(θ)) do p, xi, θi
-        isnothing(p.private_equality) ? nothing : p.private_equality(xi, θi)
+    gs = map(problems, blocks(θ)) do p, θi
+        isnothing(p.private_equality) ? nothing : p.private_equality(x, θi)
     end
-    hs = map(problems, blocks(x), blocks(θ)) do p, xi, θi
-        isnothing(p.private_inequality) ? nothing : p.private_inequality(xi, θi)
+    hs = map(problems, blocks(θ)) do p, θi
+        isnothing(p.private_inequality) ? nothing : p.private_inequality(x, θi)
     end
 
     g̃ = isnothing(shared_equality) ? nothing : shared_equality(x, θ)
@@ -132,11 +130,11 @@ function dimensions(
 )
     x = only(blocksizes(test_point))
     θ = only(blocksizes(test_parameter))
-    λ = map(problems, blocks(test_point), blocks(test_parameter)) do p, xi, θi
-        isnothing(p.private_equality) ? 0 : length(p.private_equality(xi, θi))
+    λ = map(problems, blocks(test_parameter)) do p, θi
+        isnothing(p.private_equality) ? 0 : length(p.private_equality(test_point, θi))
     end
-    μ = map(problems, blocks(test_point), blocks(test_parameter)) do p, xi, θi
-        isnothing(p.private_inequality) ? 0 : length(p.private_inequality(xi, θi))
+    μ = map(problems, blocks(test_parameter)) do p, θi
+        isnothing(p.private_inequality) ? 0 : length(p.private_inequality(test_point, θi))
     end
 
     λ̃ =
