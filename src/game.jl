@@ -29,7 +29,6 @@ function ParametricGame(;
     problems,
     shared_equality = nothing,
     shared_inequality = nothing,
-    parametric_mcp_options = (;),
 )
     N = length(problems)
     @assert N == length(blocks(test_point))
@@ -155,22 +154,11 @@ function solve(
     game::ParametricGame,
     θ;
     solver_type = InteriorPoint(),
-    x₀ = nothing,
-    y₀ = nothing,
-    tol = 1e-4
+    x₀ = zeros(sum(game.dims.x) + sum(game.dims.λ) + game.dims.λ̃),
+    y₀ = ones(sum(game.dims.μ) + game.dims.μ̃),
+    tol = 1e-4,
 )
-    initial_x =
-        !isnothing(x₀) ? x₀ : zeros(sum(game.dims.x) + sum(game.dims.λ) + game.dims.λ̃)
-    initial_y = !isnothing(y₀) ? y₀ : zeros(sum(game.dims.μ) + game.dims.μ̃)
-
-    (; x, y, s, kkt_error) = solve(
-        solver_type,
-        game.mcp;
-        θ,
-        x₀ = initial_x,
-        y₀ = initial_y,
-        tol
-    )
+    (; x, y, s, kkt_error) = solve(solver_type, game.mcp; θ, x₀, y₀, tol)
 
     # Unpack primals per-player for ease of access later.
     end_dims = cumsum(game.dims.x)
@@ -178,7 +166,7 @@ function solve(
         (ii == 1) ? x[1:end_dims[ii]] : x[(end_dims[ii - 1] + 1):end_dims[ii]]
     end
 
-    (; primals, variables = (; x, y), kkt_error)
+    (; primals, variables = (; x, y, s), kkt_error)
 end
 
 "Return the number of players in this game."

@@ -58,15 +58,15 @@ end
 @testset "ParametricGameTests" begin
     lim = 0.5
 
-    game = ParametricGame(;
+    game = MCPSolver.ParametricGame(;
         test_point = mortar([[1, 1], [1, 1]]),
         test_parameter = mortar([[1, 1], [1, 1]]),
         problems = [
-            OptimizationProblem(;
+            MCPSolver.OptimizationProblem(;
                 objective = (x, θi) -> sum((x[Block(1)] - θi) .^ 2),
                 private_inequality = (xi, θi) -> -abs.(xi) .+ lim,
             ),
-            OptimizationProblem(;
+            MCPSolver.OptimizationProblem(;
                 objective = (x, θi) -> sum((x[Block(2)] - θi) .^ 2),
                 private_inequality = (xi, θi) -> -abs.(xi) .+ lim,
             ),
@@ -75,9 +75,9 @@ end
 
 
     θ = mortar([[-1, 0], [1, 1]])
-    (; primals, variables, kkt_error) = solve(
-        game;
-        θ,
+    (; primals, variables, kkt_error) = MCPSolver.solve(
+        game,
+        θ;
         tol = 1e-4,
     )
 

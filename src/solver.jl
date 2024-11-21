@@ -58,6 +58,8 @@ function solve(
             y += α_y * δy
 
             kkt_error = maximum(abs.(F))
+
+            @info iters, kkt_error
             iters += 1
         end
 
