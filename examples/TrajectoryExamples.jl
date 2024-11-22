@@ -14,7 +14,8 @@ collision-avoidance.
 """
 
 module TrajectoryExamples
-using LevelTwoInverseGames:
+
+using MCPSolver:
     ParametricGame, OptimizationProblem, num_players, solve
 
 using LazySets: LazySets
@@ -41,7 +42,6 @@ using TrajectoryGamesExamples: planar_double_integrator, animate_sim_steps
 using BlockArrays: mortar, blocks, BlockArray, Block
 using GLMakie: GLMakie
 using Makie: Makie
-using PATHSolver: PATHSolver
 using LinearAlgebra: norm_sqr, norm
 using ProgressMeter: ProgressMeter
 
@@ -56,27 +56,6 @@ export build_parametric_game,
     unpack_parameters,
     parameter_mask,
     generate_initial_guess
-
-"Zygote-friendly trajectory unpacking utility."
-function unpack_trajectory_zygote(flat_trajectories; dynamics::ProductDynamics)
-    horizon = Int(
-        length(flat_trajectories[1]) /
-        (state_dim(dynamics, 1) + control_dim(dynamics, 1)),
-    )
-
-    map(1:num_players(dynamics), flat_trajectories) do ii, traj
-        num_states = state_dim(dynamics, ii) * horizon
-        X = reshape(traj[1:num_states], (state_dim(dynamics, ii), horizon))
-        U = reshape(
-            traj[(num_states + 1):end],
-            (control_dim(dynamics, ii), horizon),
-        )
-
-        (; xs = eachcol(X) |> collect, us = eachcol(U) |> collect)
-    end
-end
-
-export unpack_trajectory_zygote
 
 include("lane_change.jl")
 

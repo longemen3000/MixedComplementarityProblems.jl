@@ -87,8 +87,6 @@ function setup_trajectory_game(; environment)
     TrajectoryGame(dynamics, cost, environment, coupling_constraints)
 end
 
-using Infiltrator
-
 function main(;
     initial_state = mortar([[1.0, 1.0, 0.0, 1.0], [3.2, 0.9, 0.0, 1.0]]),
     horizon = 10,
