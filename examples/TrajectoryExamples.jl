@@ -16,8 +16,7 @@ collision-avoidance.
 module TrajectoryExamples
 
 push!(LOAD_PATH, pwd() * "/../src")
-using MCPSolver:
-    ParametricGame, OptimizationProblem, num_players, solve
+using MCPSolver: MCPSolver
 
 using LazySets: LazySets
 using TrajectoryGamesBase:
@@ -47,17 +46,6 @@ using LinearAlgebra: norm_sqr, norm
 using ProgressMeter: ProgressMeter
 
 include("utils.jl")
-export build_parametric_game,
-    WarmStartRecedingHorizonStrategy,
-    pack_observations,
-    unpack_observations,
-    pack_parameters,
-    unpack_trajectory,
-    pack_parameters,
-    unpack_parameters,
-    parameter_mask,
-    generate_initial_guess
-
 include("lane_change.jl")
 
 end # module TrajectoryExamples

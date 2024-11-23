@@ -30,8 +30,11 @@ function solve(
 
     ϵ = 1.0
     kkt_error = Inf
+    status = :solved
     while kkt_error > tol && ϵ > tol
         iters = 1
+        status = :solved
+
         while kkt_error > ϵ && iters < max_inner_iters
             # Compute the Newton step.
             # TODO! Can add some adaptive regularization.
@@ -50,6 +53,7 @@ function solve(
 
             if isnan(α_s) || isnan(α_y)
                 @warn "Linesearch failed. Exiting prematurely."
+                status = :failed
                 break
             end
 
@@ -65,7 +69,7 @@ function solve(
         ϵ *= 1 - exp(-iters)
     end
 
-    (; x, y, s, kkt_error)
+    (; status, x, y, s, kkt_error)
 end
 
 """Helper function to compute the step size `α` which solves:

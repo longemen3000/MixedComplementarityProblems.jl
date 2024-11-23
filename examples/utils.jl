@@ -7,10 +7,7 @@ function unpack_trajectory(flat_trajectories; dynamics::ProductDynamics)
     trajs = map(1:num_players(dynamics), blocks(flat_trajectories)) do ii, traj
         num_states = state_dim(dynamics, ii) * horizon
         X = reshape(traj[1:num_states], (state_dim(dynamics, ii), horizon))
-        U = reshape(
-            traj[(num_states + 1):end],
-            (control_dim(dynamics, ii), horizon),
-        )
+        U = reshape(traj[(num_states + 1):end], (control_dim(dynamics, ii), horizon))
 
         (; xs = eachcol(X) |> collect, us = eachcol(U) |> collect)
     end
@@ -39,21 +36,14 @@ end
 
 "Pack an initial state and set of other params into a single parameter vector."
 function pack_parameters(initial_state, other_params_per_player)
-    mortar(
-        map(
-            (x, θ) -> [x; θ],
-            blocks(initial_state),
-            blocks(other_params_per_player),
-        ),
-    )
+    mortar(map((x, θ) -> [x; θ], blocks(initial_state), blocks(other_params_per_player)))
 end
 
 "Unpack parameters into initial state and other parameters."
 function unpack_parameters(params; dynamics::ProductDynamics)
-    initial_state =
-        mortar(map(1:num_players(dynamics), blocks(params)) do ii, θi
-            θi[1:state_dim(dynamics, ii)]
-        end)
+    initial_state = mortar(map(1:num_players(dynamics), blocks(params)) do ii, θi
+        θi[1:state_dim(dynamics, ii)]
+    end)
     other_params = mortar(map(1:num_players(dynamics), blocks(params)) do ii, θi
         θi[((state_dim(dynamics, ii) + 1):end)]
     end)
@@ -71,7 +61,7 @@ function parameter_mask(; dynamics::ProductDynamics, params_per_player)
 end
 
 "Convert a TrajectoryGame to a PrimalDualMCP."
-function build_mcp(;
+function build_parametric_game(;
     game::TrajectoryGame,
     horizon = 10,
     params_per_player = 0, # not including initial state, which is always a param
@@ -84,8 +74,7 @@ function build_mcp(;
         (; xs, us) = unpack_trajectory(τ; game.dynamics)
         ts = Iterators.eachindex(xs)
         map(xs, us, ts) do x, u, t
-            game.cost.discount_factor^(t - 1) *
-            game.cost.stage_cost[ii](x, u, t, θi)
+            game.cost.discount_factor^(t - 1) * game.cost.stage_cost[ii](x, u, t, θi)
         end |> game.cost.reducer
     end
 
@@ -94,22 +83,21 @@ function build_mcp(;
     end
 
     # Shared equality constraints.
-    shared_equality =
-        (τ, θ) -> let
-            (; xs, us) = unpack_trajectory(τ; game.dynamics)
-            (; initial_state) = unpack_parameters(θ; game.dynamics)
+    shared_equality = (τ, θ) -> let
+        (; xs, us) = unpack_trajectory(τ; game.dynamics)
+        (; initial_state) = unpack_parameters(θ; game.dynamics)
 
-            # Initial state constraint.
-            g̃1 = xs[1] - initial_state
+        # Initial state constraint.
+        g̃1 = xs[1] - initial_state
 
-            # Dynamics constraints.
-            ts = Iterators.eachindex(xs)
-            g̃2 = mapreduce(vcat, ts[2:end]) do t
-                xs[t] - game.dynamics(xs[t - 1], us[t - 1])
-            end
-
-            vcat(g̃1, g̃2)
+        # Dynamics constraints.
+        ts = Iterators.eachindex(xs)
+        g̃2 = mapreduce(vcat, ts[2:end]) do t
+            xs[t] - game.dynamics(xs[t - 1], us[t - 1])
         end
+
+        vcat(g̃1, g̃2)
+    end
 
     # Shared inequality constraints.
     shared_inequality =
@@ -126,18 +114,16 @@ function build_mcp(;
             end
 
             # Actuator/state limits.
-            actuator_constraint =
-                TrajectoryGamesBase.get_constraints_from_box_bounds(
-                    control_bounds(game.dynamics),
-                )
+            actuator_constraint = TrajectoryGamesBase.get_constraints_from_box_bounds(
+                control_bounds(game.dynamics),
+            )
             h̃3 = mapreduce(vcat, us) do u
                 actuator_constraint(u)
             end
 
-            state_constraint =
-                TrajectoryGamesBase.get_constraints_from_box_bounds(
-                    state_bounds(game.dynamics),
-                )
+            state_constraint = TrajectoryGamesBase.get_constraints_from_box_bounds(
+                state_bounds(game.dynamics),
+            )
             h̃4 = mapreduce(vcat, xs) do x
                 state_constraint(x)
             end
@@ -146,27 +132,24 @@ function build_mcp(;
         end
 
     primal_dims = [
-        horizon *
-        (state_dim(game.dynamics, ii) + control_dim(game.dynamics, ii)) for
+        horizon * (state_dim(game.dynamics, ii) + control_dim(game.dynamics, ii)) for
         ii in 1:N
     ]
 
-    ParametricGame(;
+    MCPSolver.ParametricGame(;
         test_point = BlockArray(zeros(sum(primal_dims)), primal_dims),
         test_parameter = mortar([
-            zeros(state_dim(game.dynamics, ii) + params_per_player) for
-            ii in 1:N
+            zeros(state_dim(game.dynamics, ii) + params_per_player) for ii in 1:N
         ]),
-        problems = map(f -> OptimizationProblem(; objective = f), objectives),
+        problems = map(f -> MCPSolver.OptimizationProblem(; objective = f), objectives),
         shared_equality,
         shared_inequality,
     )
 end
 
 "Generate an initial guess for primal variables following a zero input sequence."
-function generate_initial_guess(;
+function zero_input_trajectory(;
     game::TrajectoryGame{<:ProductDynamics},
-    parametric_game::ParametricGame,
     horizon,
     initial_state,
 )
@@ -175,83 +158,60 @@ function generate_initial_guess(;
             (x, t) -> zeros(control_dim(game.dynamics, ii))
         end |> TrajectoryGamesBase.JointStrategy
 
-    zero_input_trajectory = TrajectoryGamesBase.rollout(
-        game.dynamics,
-        rollout_strategy,
-        initial_state,
-        horizon,
-    )
-
-    [
-        pack_trajectory(zero_input_trajectory)
-        zeros(
-            sum(parametric_game.dims.λ) +
-            sum(parametric_game.dims.μ) +
-            parametric_game.dims.λ̃ +
-            parametric_game.dims.μ̃,
-        )
-    ]
+    TrajectoryGamesBase.rollout(game.dynamics, rollout_strategy, initial_state, horizon)
 end
 
 "Solve a parametric trajectory game, where the parameter is just the initial state."
 function TrajectoryGamesBase.solve_trajectory_game!(
     game::TrajectoryGame{<:ProductDynamics},
     horizon,
+    parameter_value,
     strategy;
-    mcp = build_mcp(;
+    parametric_game = build_parametric_game(;
         game,
         horizon,
         params_per_player = Int(
             (length(parameter_value) - state_dim(game)) / num_players(game),
         ),
     ),
-    verbose = false,
-    solving_info = nothing,
 )
     # Solve, maybe with warm starting.
-    if !isnothing(strategy.last_solution) &&
-       strategy.last_solution.status == PATHSolver.MCP_Solved
-        solution = solve(
-            mcp,
-            initial_guess = strategy.last_solution.variables,
-            verbose,
+    if !isnothing(strategy.last_solution) && strategy.last_solution.status == :solved
+        solution = MCPSolver.solve(
+            parametric_game,
+            parameter_value;
+            solver_type = MCPSolver.InteriorPoint(),
+            x₀ = strategy.last_solution.variables.x,
+            y₀ = strategy.last_solution.variables.y,
         )
     else
         (; initial_state) = unpack_parameters(parameter_value; game.dynamics)
-        solution = solve(
-            mcp,
+        solution = MCPSolver.solve(
+            parametric_game,
             parameter_value;
-            initial_guess = generate_initial_guess(;
-                game,
-                parametric_game,
-                horizon,
-                initial_state,
-            ),
-            verbose,
+            solver_type = MCPSolver.InteriorPoint(),
+            x₀ = [
+                zero_input_trajectory(; game, horizon, initial_state)
+                zeros(sum(parametric_game.dims.λ) + parametric_game.dims.λ̃)
+            ],
         )
     end
 
-    if !isnothing(solving_info)
-        push!(solving_info, solution.info)
-    end
-
     # Update warm starting info.
-    if solution.status == PATHSolver.MCP_Solved
+    if solution.status == :solved
         strategy.last_solution = solution
     end
     strategy.solution_status = solution.status
 
     # Pack solution into OpenLoopStrategy.
-    trajs = unstack_trajectory(
-        unpack_trajectory(mortar(solution.primals); game.dynamics),
-    )
+    trajs = unstack_trajectory(unpack_trajectory(mortar(solution.primals); game.dynamics))
     JointStrategy(map(traj -> OpenLoopStrategy(traj.xs, traj.us), trajs))
 end
 
 "Receding horizon strategy that supports warm starting."
 Base.@kwdef mutable struct WarmStartRecedingHorizonStrategy
     game::TrajectoryGame
-    parametric_game::ParametricGame
+    parametric_game::MCPSolver.ParametricGame
     receding_horizon_strategy::Any = nothing
     time_last_updated::Int = 0
     turn_length::Int
@@ -268,14 +228,13 @@ function (strategy::WarmStartRecedingHorizonStrategy)(state, time)
 
     update_plan = !plan_exists || !plan_is_still_valid
     if update_plan
-        strategy.receding_horizon_strategy =
-            TrajectoryGamesBase.solve_trajectory_game!(
-                strategy.game,
-                strategy.horizon,
-                pack_parameters(state, strategy.parameters),
-                strategy;
-                strategy.parametric_game,
-            )
+        strategy.receding_horizon_strategy = TrajectoryGamesBase.solve_trajectory_game!(
+            strategy.game,
+            strategy.horizon,
+            pack_parameters(state, strategy.parameters),
+            strategy;
+            strategy.parametric_game,
+        )
         strategy.time_last_updated = time
         time_along_plan = 1
     end

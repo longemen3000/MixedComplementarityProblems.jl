@@ -32,6 +32,7 @@ using BlockArrays: BlockArray, Block, mortar, blocks
         @test sum(sol.y .* H(sol.x, sol.y; θ)) ≤ 1e-3
         @test all(sol.s .≤ 1e-3)
         @test sol.kkt_error ≤ 1e-3
+        @test sol.status == :solved
     end
 
     @testset "BasicCallableConstructor" begin
@@ -76,9 +77,10 @@ end
 
     θ = mortar([[-1, 0], [1, 1]])
     tol = 1e-4
-    (; primals, variables, kkt_error) = MCPSolver.solve(game, θ; tol)
+    (; status, primals, variables, kkt_error) = MCPSolver.solve(game, θ; tol)
 
     for ii in 1:2
         @test all(isapprox.(primals[ii], clamp.(θ[Block(ii)], -lim, lim), atol = 10tol))
     end
+    @test status == :solved
 end

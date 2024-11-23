@@ -156,7 +156,7 @@ function solve(
     y₀ = ones(sum(game.dims.μ) + game.dims.μ̃),
     tol = 1e-4,
 )
-    (; x, y, s, kkt_error) = solve(solver_type, game.mcp; θ, x₀, y₀, tol)
+    (; x, y, s, kkt_error, status) = solve(solver_type, game.mcp; θ, x₀, y₀, tol)
 
     # Unpack primals per-player for ease of access later.
     end_dims = cumsum(game.dims.x)
@@ -164,7 +164,7 @@ function solve(
         (ii == 1) ? x[1:end_dims[ii]] : x[(end_dims[ii - 1] + 1):end_dims[ii]]
     end
 
-    (; primals, variables = (; x, y, s), kkt_error)
+    (; primals, variables = (; x, y, s), kkt_error, status)
 end
 
 "Return the number of players in this game."

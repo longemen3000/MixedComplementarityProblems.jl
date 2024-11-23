@@ -1,35 +1,3 @@
-module LaneChange
-
-using ..TrajectoryExamples
-using MCPSolver
-
-using LazySets: LazySets
-using TrajectoryGamesBase:
-    TrajectoryGamesBase,
-    PolygonEnvironment,
-    ProductDynamics,
-    TimeSeparableTrajectoryGameCost,
-    TrajectoryGame,
-    GeneralSumCostStructure,
-    num_players,
-    time_invariant_linear_dynamics,
-    unstack_trajectory,
-    stack_trajectories,
-    state_dim,
-    control_dim,
-    state_bounds,
-    control_bounds,
-    OpenLoopStrategy,
-    JointStrategy,
-    RecedingHorizonStrategy,
-    rollout
-using TrajectoryGamesExamples: planar_double_integrator, animate_sim_steps
-using BlockArrays: mortar, blocks, BlockArray, Block
-using GLMakie: GLMakie
-using Makie: Makie
-using LinearAlgebra: norm_sqr, norm
-using ProgressMeter: ProgressMeter
-
 "Utility to create the road environment."
 function setup_road_environment(; lane_width = 2, num_lanes = 2, height = 50)
     lane_centers = map(lane_idx -> (lane_idx - 0.5) * lane_width, 1:num_lanes)
@@ -86,7 +54,7 @@ function setup_trajectory_game(; environment)
     TrajectoryGame(dynamics, cost, environment, coupling_constraints)
 end
 
-function main(;
+function run_lane_change_example(;
     initial_state = mortar([[1.0, 1.0, 0.0, 1.0], [3.2, 0.9, 0.0, 1.0]]),
     horizon = 10,
     height = 50.0,
@@ -96,7 +64,7 @@ function main(;
 )
     (; environment, lane_centers) =
         setup_road_environment(; num_lanes, lane_width, height)
-    game = LaneChange.setup_trajectory_game(; environment)
+    game = setup_trajectory_game(; environment)
 
     # Build a game. Each player has a parameter for lane preference.
     # P1 wants to stay in the left lane, and P2 wants to move from the
@@ -137,5 +105,3 @@ function main(;
         aspect = num_lanes * lane_width / height,
     )
 end
-
-end # module LaneChange
