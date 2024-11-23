@@ -27,7 +27,6 @@ using TrajectoryGamesExamples: planar_double_integrator, animate_sim_steps
 using BlockArrays: mortar, blocks, BlockArray, Block
 using GLMakie: GLMakie
 using Makie: Makie
-using PATHSolver: PATHSolver
 using LinearAlgebra: norm_sqr, norm
 using ProgressMeter: ProgressMeter
 

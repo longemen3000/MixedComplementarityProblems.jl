@@ -15,6 +15,7 @@ collision-avoidance.
 
 module TrajectoryExamples
 
+push!(LOAD_PATH, pwd() * "/../src")
 using MCPSolver:
     ParametricGame, OptimizationProblem, num_players, solve
 
