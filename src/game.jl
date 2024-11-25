@@ -80,8 +80,8 @@ function ParametricGame(;
             [
                 reduce(vcat, ∇Ls)
                 reduce(vcat, gs)
-                reduce(vcat, hs)
                 g̃
+                reduce(vcat, hs)
                 h̃
             ],
         ),
@@ -93,8 +93,8 @@ function ParametricGame(;
             [
                 x
                 mapreduce(b -> length(b) == 0 ? nothing : b, vcat, blocks(λ))
-                mapreduce(b -> length(b) == 0 ? nothing : b, vcat, blocks(μ))
                 length(λ̃) == 0 ? nothing : λ̃
+                mapreduce(b -> length(b) == 0 ? nothing : b, vcat, blocks(μ))
                 length(μ̃) == 0 ? nothing : μ̃
             ],
         ),
@@ -103,16 +103,16 @@ function ParametricGame(;
     z̲ = [
         fill(-Inf, length(x))
         fill(-Inf, length(λ))
-        fill(0, length(μ))
         fill(-Inf, length(λ̃))
+        fill(0, length(μ))
         fill(0, length(μ̃))
     ]
 
     z̅ = [
         fill(Inf, length(x))
         fill(Inf, length(λ))
-        fill(Inf, length(μ))
         fill(Inf, length(λ̃))
+        fill(Inf, length(μ))
         fill(Inf, length(μ̃))
     ]
 
@@ -156,6 +156,7 @@ function solve(
     y₀ = ones(sum(game.dims.μ) + game.dims.μ̃),
     tol = 1e-4,
 )
+    @infiltrate
     (; x, y, s, kkt_error, status) = solve(solver_type, game.mcp; θ, x₀, y₀, tol)
 
     # Unpack primals per-player for ease of access later.
