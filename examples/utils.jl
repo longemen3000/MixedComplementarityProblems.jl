@@ -177,7 +177,6 @@ function TrajectoryGamesBase.solve_trajectory_game!(
 )
     # Solve, maybe with warm starting.
     if !isnothing(strategy.last_solution) && strategy.last_solution.status == :solved
-        println("warm start")
         solution = MCPSolver.solve(
             parametric_game,
             parameter_value;
@@ -186,9 +185,7 @@ function TrajectoryGamesBase.solve_trajectory_game!(
             y₀ = strategy.last_solution.variables.y,
         )
     else
-        println("cold start")
         (; initial_state) = unpack_parameters(parameter_value; game.dynamics)
-        @infiltrate
         solution = MCPSolver.solve(
             parametric_game,
             parameter_value;
