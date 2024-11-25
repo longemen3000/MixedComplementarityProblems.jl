@@ -194,7 +194,7 @@ function TrajectoryGamesBase.solve_trajectory_game!(
             parameter_value;
             solver_type = MCPSolver.InteriorPoint(),
             x₀ = [
-                zero_input_trajectory(; game, horizon, initial_state)
+                pack_trajectory(zero_input_trajectory(; game, horizon, initial_state))
                 zeros(sum(parametric_game.dims.λ) + parametric_game.dims.λ̃)
             ],
         )
