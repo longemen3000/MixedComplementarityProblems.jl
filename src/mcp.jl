@@ -2,7 +2,7 @@
 functions G(.) and H(.) such that
                              0 = G(x, y; θ)
                              0 ≤ H(x, y; θ) ⟂ y ≥ 0.
-# 2B
+
 The primal-dual system arises when we introduce slack variable `s` and set
                              G(x, y; θ)     = 0
                              H(x, y; θ) - s = 0
@@ -97,21 +97,21 @@ function PrimalDualMCP(
         (x, y, s; θ, ϵ) -> _∇F([x; y; s; θ; ϵ])
     end
 
-    ∇F_θ = if !compute_sensitivities
-        nothing
-    else
-        ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, θ_symbolic)
-        _∇F = SymbolicUtils.build_function(
-            ∇F_symbolic,
-            [z_symbolic; θ_symbolic; ϵ_symbolic];
-            in_place = false,
-            backend_options,
-        )
+    ∇F_θ =
+        !compute_sensitivities ? nothing :
+        let
+            ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, θ_symbolic)
+            _∇F = SymbolicUtils.build_function(
+                ∇F_symbolic,
+                [z_symbolic; θ_symbolic; ϵ_symbolic];
+                in_place = false,
+                backend_options,
+            )
 
-        (x, y, s; θ, ϵ) -> _∇F([x; y; s; θ; ϵ])
-    end
+            (x, y, s; θ, ϵ) -> _∇F([x; y; s; θ; ϵ])
+        end
 
-    PrimalDualMCP(F, ∇F_z, ∇F_Θ, length(x_symbolic), length(y_symbolic))
+    PrimalDualMCP(F, ∇F_z, ∇F_θ, length(x_symbolic), length(y_symbolic))
 end
 
 """ Construct a PrimalDualMCP from `K(z; θ) ⟂ z̲ ≤ z ≤ z̅`, where `K` is callable.
