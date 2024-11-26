@@ -62,8 +62,8 @@ function MCPSolver.solve(
     # glue forward and backward pass together into dual number types
     z_d = ForwardDiff.Dual{T}.(solution.z, z_p)
     x_d = @view z_d[1:(mcp.unconstrained_dimension)]
-    y_d = @view
-    z_d[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
+    y_d =
+        (@view z_d[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)])
     s_d = @view z_d[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
 
     (; solution.status, solution.kkt_error, solution.ϵ, x = x_d, y = y_d, s = s_d)
