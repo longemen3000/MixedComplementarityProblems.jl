@@ -156,7 +156,7 @@ function solve(
     y₀ = ones(sum(game.dims.μ) + game.dims.μ̃),
     tol = 1e-4,
 )
-    (; x, y, s, kkt_error, status) = solve(solver_type, game.mcp; θ, x₀, y₀, tol)
+    (; x, y, s, kkt_error, status) = solve(solver_type, game.mcp, θ; x₀, y₀, tol)
 
     # Unpack primals per-player for ease of access later.
     end_dims = cumsum(game.dims.x)

@@ -17,8 +17,8 @@ when the previous subproblem is solved in fewer iterations.
 """
 function solve(
     ::InteriorPoint,
-    mcp::PrimalDualMCP;
-    θ,
+    mcp::PrimalDualMCP,
+    θ;
     x₀ = zeros(mcp.unconstrained_dimension),
     y₀ = ones(mcp.constrained_dimension),
     tol = 1e-4,

@@ -25,19 +25,16 @@ function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
     )
 
     (; x, y, s, ϵ) = solution
-    ∂z∂θ = -mcp.∇F_z(x, y, s; θ, ϵ) \ mcp.∇F_θ(x, y, s; θ, ϵ)
+    ∂z∂θ =
+        LinearAlgebra.qr(-collect(mcp.∇F_z(x, y, s; θ, ϵ)), LinearAlgebra.ColumnNorm()) \
+        collect(mcp.∇F_θ(x, y, s; θ, ϵ))
 
-    SparseArrays.sparse(∂z∂θ)
+    ∂z∂θ
 end
 
-function ChainRulesCore.rrule(
-    ::typeof(MCPSolver.solve),
-    solver_type::MCPSolver.SolverType,
-    mcp::MCPSolver.PrimalDualMCP;
-    θ,
-    kwargs...,
-)
-    solution = MCPSolver.solve(solver_type, mcp; θ, kwargs...)
+function ChainRulesCore.rrule(::typeof(MCPSolver.solve), solver_type, mcp, θ; kwargs...)
+    println("yoyoyyo")
+    solution = MCPSolver.solve(solver_type, mcp, θ; kwargs...)
     project_to_θ = ChainRulesCore.ProjectTo(θ)
 
     function solve_pullback(∂solution)
@@ -52,6 +49,7 @@ function ChainRulesCore.rrule(
             ∂l∂x = ∂solution.x
             ∂l∂y = ∂solution.y
             ∂l∂s = ∂solution.s
+#            @infiltrate
             project_to_θ(∂z∂θ' * [∂l∂x; ∂l∂y; ∂l∂s])
         end
 
@@ -63,8 +61,8 @@ end
 
 function MCPSolver.solve(
     solver_type::MCPSolver.SolverType,
-    mcp::MCPSolver.PrimalDualMCP;
-    θ::AbstractVector{<:ForwardDiff.Dual{T}},
+    mcp::MCPSolver.PrimalDualMCP,
+    θ::AbstractVector{<:ForwardDiff.Dual{T}};
     kwargs...,
 ) where {T}
     # strip off the duals
