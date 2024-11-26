@@ -52,7 +52,14 @@ function ChainRulesCore.rrule(
             ∂l∂x = ∂solution.x
             ∂l∂y = ∂solution.y
             ∂l∂s = ∂solution.s
-            project_to_θ(∂z∂θ' * [∂l∂x; ∂l∂y; ∂l∂s])
+
+            @views project_to_θ(
+                ∂z∂θ[1:(mcp.unconstrained_dimension), :]' * ∂l∂x +
+                ∂z∂θ[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension), :]' *
+                ∂l∂y +
+                ∂z∂θ[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end, :]' *
+                ∂l∂s,
+            )
         end
 
         no_grad_args..., ∂θ

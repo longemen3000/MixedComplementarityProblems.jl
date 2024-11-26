@@ -75,7 +75,7 @@ using FiniteDiff: FiniteDiff
         function f(θ)
             sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
             #@infiltrate
-            sum(sol.x .^ 2) + sum(sol.y .^ 2) + sum(sol.s .^ 2)
+            sum(sol.x .^ 2) + sum(sol.y .^ 2)
         end
 
         #@infiltrate
