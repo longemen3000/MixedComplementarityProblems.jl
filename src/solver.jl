@@ -39,7 +39,7 @@ function solve(
             # Compute the Newton step.
             # TODO! Can add some adaptive regularization.
             F = mcp.F(x, y, s; θ, ϵ)
-            δz = -mcp.∇F(x, y, s; θ, ϵ) \ F
+            δz = -mcp.∇F_z(x, y, s; θ, ϵ) \ F
 
             # Fraction to the boundary linesearch.
             δx = @view δz[1:(mcp.unconstrained_dimension)]
@@ -69,7 +69,7 @@ function solve(
         ϵ *= 1 - exp(-iters)
     end
 
-    (; status, x, y, s, kkt_error)
+    (; status, x, y, s, kkt_error, ϵ)
 end
 
 """Helper function to compute the step size `α` which solves:

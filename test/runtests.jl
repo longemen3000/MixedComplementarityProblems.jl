@@ -36,18 +36,24 @@ using BlockArrays: BlockArray, Block, mortar, blocks
     end
 
     @testset "BasicCallableConstructor" begin
-        mcp = MCPSolver.PrimalDualMCP(G, H, size(M, 1), length(b), size(M, 1))
+        mcp = MCPSolver.PrimalDualMCP(
+            G,
+            H;
+            unconstrained_dimension = size(M, 1),
+            constrained_dimension = length(b),
+            parameter_dimension = size(M, 1),
+        )
         sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 
         check_solution(sol)
     end
 
     @testset "AlternativeCallableConstructor" begin
-       mcp = MCPSolver.PrimalDualMCP(
+        mcp = MCPSolver.PrimalDualMCP(
             K,
             [fill(-Inf, size(M, 1)); fill(0, length(b))],
-            fill(Inf, size(M, 1) + length(b)),
-            size(M, 1)
+            fill(Inf, size(M, 1) + length(b));
+            parameter_dimension = size(M, 1),
         )
         sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp; θ)
 

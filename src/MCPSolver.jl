@@ -13,5 +13,6 @@ include("SymbolicUtils.jl")
 include("mcp.jl")
 include("solver.jl")
 include("game.jl")
+include("AutoDiff.jl")
 
 end # module MCPSolver

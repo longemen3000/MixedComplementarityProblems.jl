@@ -1,7 +1,7 @@
 """
 Minimal abstraction on top of `Symbolics.jl` and `FastDifferentiation.jl` to make switching between the two easier.
 
-Taken from: ParametricMCPs.jl.
+Taken from: https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl/blob/main/src/SymbolicUtils.jl
 """
 module SymbolicUtils
 

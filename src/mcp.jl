@@ -2,7 +2,7 @@
 functions G(.) and H(.) such that
                              0 = G(x, y; θ)
                              0 ≤ H(x, y; θ) ⟂ y ≥ 0.
-
+# 2B
 The primal-dual system arises when we introduce slack variable `s` and set
                              G(x, y; θ)     = 0
                              H(x, y; θ) - s = 0
@@ -10,11 +10,13 @@ The primal-dual system arises when we introduce slack variable `s` and set
 for some ϵ > 0. Define the function `F(x, y, s; θ, ϵ)` to return the left
 hand side of this system of equations.
 """
-struct PrimalDualMCP{T1,T2}
+struct PrimalDualMCP{T1,T2,T3}
     "A callable `F(x, y, s; θ, ϵ)` which computes the KKT error in the primal-dual system."
     F::T1
-    "A callable `∇F(x, y, s; θ, ϵ)` which stores the Jacobian of the KKT error wrt z."
-    ∇F::T2
+    "A callable `∇F_z(x, y, s; θ, ϵ)` which stores the Jacobian of the KKT error wrt z."
+    ∇F_z::T2
+    "A callable `∇F_θ(x, y, s; θ, ϵ)` which stores the Jacobian of the KKT error wrt θ."
+    ∇F_θ::T3
     "Dimension of unconstrained variable."
     unconstrained_dimension::Int
     "Dimension of constrained variable."
@@ -24,10 +26,11 @@ end
 "Helper to construct a PrimalDualMCP from callable functions `G(.)` and `H(.)`."
 function PrimalDualMCP(
     G,
-    H,
+    H;
     unconstrained_dimension,
     constrained_dimension,
-    parameter_dimension;
+    parameter_dimension,
+    compute_sensitivities = false,
     backend = SymbolicUtils.SymbolicsBackend(),
     backend_options = (;),
 )
@@ -43,6 +46,7 @@ function PrimalDualMCP(
         x_symbolic,
         y_symbolic,
         θ_symbolic;
+        compute_sensitivities,
         backend,
         backend_options,
     )
@@ -55,6 +59,7 @@ function PrimalDualMCP(
     x_symbolic::Vector{T},
     y_symbolic::Vector{T},
     θ_symbolic::Vector{T};
+    compute_sensitivities = false,
     backend = SymbolicUtils.SymbolicsBackend(),
     backend_options = (;),
 ) where {T<:Union{FD.Node,Symbolics.Num}}
@@ -80,7 +85,7 @@ function PrimalDualMCP(
         (x, y, s; θ, ϵ) -> _F([x; y; s; θ; ϵ])
     end
 
-    ∇F = let
+    ∇F_z = let
         ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, z_symbolic)
         _∇F = SymbolicUtils.build_function(
             ∇F_symbolic,
@@ -92,17 +97,32 @@ function PrimalDualMCP(
         (x, y, s; θ, ϵ) -> _∇F([x; y; s; θ; ϵ])
     end
 
-    PrimalDualMCP(F, ∇F, length(x_symbolic), length(y_symbolic))
+    ∇F_θ = if !compute_sensitivities
+        nothing
+    else
+        ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, θ_symbolic)
+        _∇F = SymbolicUtils.build_function(
+            ∇F_symbolic,
+            [z_symbolic; θ_symbolic; ϵ_symbolic];
+            in_place = false,
+            backend_options,
+        )
+
+        (x, y, s; θ, ϵ) -> _∇F([x; y; s; θ; ϵ])
+    end
+
+    PrimalDualMCP(F, ∇F_z, ∇F_Θ, length(x_symbolic), length(y_symbolic))
 end
 
-"""Construct a PrimalDualMCP from `K(z; θ) ⟂ z̲ ≤ z ≤ z̅`, where `K` is callable.
+""" Construct a PrimalDualMCP from `K(z; θ) ⟂ z̲ ≤ z ≤ z̅`, where `K` is callable.
 NOTE: Assumes that all upper bounds are Inf, and lower bounds are either -Inf or 0.
 """
 function PrimalDualMCP(
     K,
     lower_bounds::Vector,
-    upper_bounds::Vector,
-    parameter_dimension;
+    upper_bounds::Vector;
+    parameter_dimension,
+    compute_sensitivities = false,
     backend = SymbolicUtils.SymbolicsBackend(),
     backend_options = (;),
 )
@@ -116,6 +136,7 @@ function PrimalDualMCP(
         θ_symbolic,
         lower_bounds,
         upper_bounds;
+        compute_sensitivities,
         backend_options,
     )
 end
@@ -129,6 +150,7 @@ function PrimalDualMCP(
     θ_symbolic::Vector{T},
     lower_bounds::Vector,
     upper_bounds::Vector;
+    compute_sensitivities = false,
     backend_options = (;),
 ) where {T<:Union{FD.Node,Symbolics.Num}}
     @assert all(isinf.(upper_bounds)) && all(isinf.(lower_bounds) .|| lower_bounds .== 0)
@@ -147,6 +169,7 @@ function PrimalDualMCP(
         x_symbolic,
         y_symbolic,
         θ_symbolic;
+        compute_sensitivities,
         backend_options,
     )
 end

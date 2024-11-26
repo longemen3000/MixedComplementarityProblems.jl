@@ -23,17 +23,6 @@ function pack_trajectory(traj)
     end
 end
 
-"Utility for packing observations, stored as a 3D tensor obs[time, player, :]."
-function pack_observations(obs)
-    Iterators.flatten(obs) |> collect
-end
-
-"Utility for unpacking observations."
-function unpack_observations(flat_obs; num_players, horizon)
-    obs_dim_per_player = Int(length(flat_obs) / (horizon * num_players))
-    reshape(flat_obs, (horizon, num_players, obs_dim_per_player))
-end
-
 "Pack an initial state and set of other params into a single parameter vector."
 function pack_parameters(initial_state, other_params_per_player)
     mortar(map((x, θ) -> [x; θ], blocks(initial_state), blocks(other_params_per_player)))
