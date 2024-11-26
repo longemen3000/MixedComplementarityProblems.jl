@@ -69,16 +69,13 @@ using FiniteDiff: FiniteDiff
             unconstrained_dimension = size(M, 1),
             constrained_dimension = length(b),
             parameter_dimension = size(M, 1),
-            compute_sensitivities = true
+            compute_sensitivities = true,
         )
 
         function f(θ)
             sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
-            #@infiltrate
             sum(sol.x .^ 2) + sum(sol.y .^ 2)
         end
-
-        #@infiltrate
 
         ∇_autodiff_reverse = only(Zygote.gradient(f, θ))
         ∇_autodiff_forward = only(Zygote.gradient(θ -> Zygote.forwarddiff(f, θ), θ))
