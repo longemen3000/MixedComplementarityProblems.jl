@@ -81,10 +81,10 @@ using FiniteDiff: FiniteDiff
         #@infiltrate
 
         ∇_autodiff_reverse = only(Zygote.gradient(f, θ))
-        #∇_autodiff_forward = only(Zygote.gradient(θ -> Zygote.forwarddiff(f, θ), θ))
+        ∇_autodiff_forward = only(Zygote.gradient(θ -> Zygote.forwarddiff(f, θ), θ))
         ∇_finitediff = FiniteDiff.finite_difference_gradient(f, θ)
         @test isapprox(∇_autodiff_reverse, ∇_finitediff; atol = 1e-3)
-        #@test isapprox(∇_autodiff_reverse, ∇_autodiff_forward; atol = 1e-3)
+        @test isapprox(∇_autodiff_reverse, ∇_autodiff_forward; atol = 1e-3)
     end
 end
 

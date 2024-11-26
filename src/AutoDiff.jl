@@ -13,8 +13,6 @@ using ..MCPSolver: MCPSolver
 using ChainRulesCore: ChainRulesCore
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: LinearAlgebra
-using SparseArrays: SparseArrays
-
 using Infiltrator
 
 function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
@@ -32,8 +30,13 @@ function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
     ∂z∂θ
 end
 
-function ChainRulesCore.rrule(::typeof(MCPSolver.solve), solver_type, mcp, θ; kwargs...)
-    println("yoyoyyo")
+function ChainRulesCore.rrule(
+    ::typeof(MCPSolver.solve),
+    solver_type::MCPSolver.SolverType,
+    mcp::MCPSolver.PrimalDualMCP,
+    θ;
+    kwargs...,
+)
     solution = MCPSolver.solve(solver_type, mcp, θ; kwargs...)
     project_to_θ = ChainRulesCore.ProjectTo(θ)
 
@@ -49,7 +52,6 @@ function ChainRulesCore.rrule(::typeof(MCPSolver.solve), solver_type, mcp, θ; k
             ∂l∂x = ∂solution.x
             ∂l∂y = ∂solution.y
             ∂l∂s = ∂solution.s
-#            @infiltrate
             project_to_θ(∂z∂θ' * [∂l∂x; ∂l∂y; ∂l∂s])
         end
 
@@ -60,7 +62,7 @@ function ChainRulesCore.rrule(::typeof(MCPSolver.solve), solver_type, mcp, θ; k
 end
 
 function MCPSolver.solve(
-    solver_type::MCPSolver.SolverType,
+    solver_type::MCPSolver.InteriorPoint,
     mcp::MCPSolver.PrimalDualMCP,
     θ::AbstractVector{<:ForwardDiff.Dual{T}};
     kwargs...,
@@ -69,17 +71,27 @@ function MCPSolver.solve(
     θ_v = ForwardDiff.value.(θ)
     θ_p = ForwardDiff.partials.(θ)
     # forward pass
-    solution = MCPSolver .. solve(solver_type, mcp; θ = θ_v, kwargs...)
+    solution = MCPSolver.solve(solver_type, mcp, θ_v; kwargs...)
     # backward pass
     ∂z∂θ = _solve_jacobian_θ(mcp, solution, θ_v)
     # downstream gradient
     z_p = ∂z∂θ * θ_p
     # glue forward and backward pass together into dual number types
-    z_d = ForwardDiff.Dual{T}.(solution.z, z_p)
-    x_d = @view z_d[1:(mcp.unconstrained_dimension)]
+    x_d = ForwardDiff.Dual{T}.(solution.x, @view z_p[1:(mcp.unconstrained_dimension)])
     y_d =
-        (@view z_d[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)])
-    s_d = @view z_d[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
+        ForwardDiff.Dual{
+            T,
+        }.(
+            solution.y,
+            @view z_p[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
+        )
+    s_d =
+        ForwardDiff.Dual{
+            T,
+        }.(
+            solution.y,
+            @view z_p[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
+        )
 
     (; solution.status, solution.kkt_error, solution.ϵ, x = x_d, y = y_d, s = s_d)
 end
