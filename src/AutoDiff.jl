@@ -12,6 +12,10 @@ module AutoDiff
 using ..MCPSolver: MCPSolver
 using ChainRulesCore: ChainRulesCore
 using ForwardDiff: ForwardDiff
+using LinearAlgebra: LinearAlgebra
+using SparseArrays: SparseArrays
+
+using Infiltrator
 
 function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
     !isnothing(mcp.∇F_θ) || throw(
@@ -21,21 +25,34 @@ function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
     )
 
     (; x, y, s, ϵ) = solution
-    -mcp.∇F_z(x, y, s; θ, ϵ) \ mcp.∇F_θ(x, y, s; θ, ϵ)
+    ∂z∂θ = -mcp.∇F_z(x, y, s; θ, ϵ) \ mcp.∇F_θ(x, y, s; θ, ϵ)
+
+    SparseArrays.sparse(∂z∂θ)
 end
 
-function ChainRulesCore.rrule(::typeof(MCPSolver.solve), mcp, θ; kwargs...)
-    solution = MCPSolver.solve(mcp, θ; kwargs...)
+function ChainRulesCore.rrule(
+    ::typeof(MCPSolver.solve),
+    solver_type::MCPSolver.SolverType,
+    mcp::MCPSolver.PrimalDualMCP;
+    θ,
+    kwargs...,
+)
+    solution = MCPSolver.solve(solver_type, mcp; θ, kwargs...)
     project_to_θ = ChainRulesCore.ProjectTo(θ)
 
     function solve_pullback(∂solution)
-        no_grad_args =
-            (; ∂self = ChainRulesCore.NoTangent(), ∂problem = ChainRulesCore.NoTangent())
+        no_grad_args = (;
+            ∂self = ChainRulesCore.NoTangent(),
+            ∂solver_type = ChainRulesCore.NoTangent(),
+            ∂mcp = ChainRulesCore.NoTangent(),
+        )
 
         ∂θ = ChainRulesCore.@thunk let
             ∂z∂θ = _solve_jacobian_θ(mcp, solution, θ)
-            ∂l∂z = ∂solution.z
-            project_to_θ(∂z∂θ' * ∂l∂z)
+            ∂l∂x = ∂solution.x
+            ∂l∂y = ∂solution.y
+            ∂l∂s = ∂solution.s
+            project_to_θ(∂z∂θ' * [∂l∂x; ∂l∂y; ∂l∂s])
         end
 
         no_grad_args..., ∂θ
