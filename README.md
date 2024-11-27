@@ -96,6 +96,22 @@ end
 ∇f = only(Zygote.gradient(f, θ))
 ```
 
+## A fancier demo
+
+If you'd like to get a better sense of the kinds of problems `MCPSolver` was built for, check out the example in `examples/lane_change.jl`. This problem encodes a two-player game in which each player is driving a car and wishes to choose a trajectory that tracks a preferred lane center, maintains a desired speed, minimizes control actuation effort, and avoids collision with the other player. The problem is naturally expressed as a noncooperative game, and encoded as a mixed complementarity problem.
+
+To run the example, activate the `examples` environment
+```julia
+] activate examples
+```
+and then, from within the examples directory run
+```julia
+include("TrajectoryExamples")
+TrajectoryExamples.run_lane_change_example()
+```
+
+This will generate a video animation and save it as `sim_steps.mp4`, and it should show two vehicles smoothly changing lanes and avoiding collisions. Once compiled, the entire example should run in a few seconds (including time to save everything).
+
 ## Acknowledgement and future plans
 
 This project inherits many key ideas from [ParametricMCPs](https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl), which provides essentially identical functionality but which currently only supports the (closed-source, but otherwise excellent [PATH](https://pages.cs.wisc.edu/~ferris/path.html) solver). Ultimately, this `MCPSolver` will likely merge with `ParametricMCPs` to provide an identical frontend and allow users a flexible choice of backend solver. Currently, `MCPSolver` replicates a substantially similar interface as that provided by `ParametricMCPs`, but there are some (potentially annoying) differences that users should take care to notice, e.g., in the function signature for `solve(...)`.
