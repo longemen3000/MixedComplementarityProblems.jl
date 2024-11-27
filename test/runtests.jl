@@ -7,10 +7,10 @@ using FiniteDiff: FiniteDiff
 
 @testset "QPTestProblem" begin
     """ Test for the following QP:
-                               min_x 0.5 xᵀ M x
+                               min_x 0.5 xᵀ M x - θᵀ x
                                s.t.  Ax - b ≥ 0.
     Taking `y ≥ 0` as a Lagrange multiplier, we obtain the KKT conditions:
-                                 G(x, y) = Mx - Aᵀy = 0
+                                 G(x, y) = Mx - Aᵀy - θ = 0
                                  0 ≤ y ⟂ H(x, y) = Ax - b ≥ 0.
     """
     M = [2 1; 1 2]
