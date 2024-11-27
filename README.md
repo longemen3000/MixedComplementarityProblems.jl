@@ -17,23 +17,23 @@ As discussed below, this package replicates functionality already available in [
 
 Suppose we have the following quadratic program:
 ```displaymath
-&\min_x~ &\frac{1}{2} x^\top M x - θ^\top x\\
-&s.t. &Ax - b \ge 0.
+min_x 0.5 xᵀ M x - θᵀ x
+s.t. Ax - b ≥ 0.
 ```
 
 The KKT conditions for this problem can be expressed as follows:
 ```displaymath
-G(x, y; θ) = M x - θ - A^\top y &= 0\\
-H(x, y; θ) = A x - b &\ge 0\\
-y &\ge 0\\
-y^\top H(x, y; θ) = 0,
+G(x, y; θ) = Mx - Aᵀ y - θ = 0
+H(x, y; θ) = Ax - b ≥ 0
+y ≥ 0
+yᵀ H(x, y; θ) = 0,
 ```
-where $y$ is the Lagrange multiplier associated to the constraint $Ax - b \ge 0$ in the original problem.
+where `y` is the Lagrange multiplier associated to the constraint `Ax - b ≥ 0` in the original problem.
 
 This is precisely a MCP, whose standard form is:
 ```displaymath
-G(x, y; θ) &= 0\\
-0 \le y \perp H(x, y; θ) &\ge 0.
+G(x, y; θ) = 0
+0 ≤ y ⟂ H(x, y; θ) ≥ 0 0.
 ```
 
 Now, we can encode this problem and solve it using `MCPSolver` as follows:
@@ -73,10 +73,11 @@ sol = MCPSolver.solve(
 Note that the initial guess for the $y$ variable must be elementwise positive. This is because we are using an interior point method; for further details, refer to `src/solver.jl`.
 
 Finally, `MCPSolver` integrates with `ChainRulesCore` and `ForwardDiff` so you can differentiate through the solver itself! For example, suppose we wanted to find the value of $\theta$ in the problem above which solves
-```math
-&\min_{\theta, x, y}~ &\overbrace{\|x\|_2^2 + \|y\|_2^2}^{f(x, y)}\\
-&s.t. &(x, y) solves \text{MCP}(\theta).
+```displaymath
+min_{θ, x, y} f(x, y)
+s.t. (x, y) solves MCP(θ).
 ```
+
 We could do so by initializing with a particular value of $\theta$ and then iteratively descending the gradient $\nabla_\theta f$, which we can easily compute via:
 ```julia
 mcp = MCPSolver.PrimalDualMCP(
@@ -90,6 +91,8 @@ mcp = MCPSolver.PrimalDualMCP(
 
 function f(θ)
     sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+
+    # Some example objective function that depends on `x` and `y`.
     sum(sol.x .^ 2) + sum(sol.y .^ 2)
 end
 
