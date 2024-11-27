@@ -66,7 +66,7 @@ function solve(
             iters += 1
         end
 
-        ϵ *= 1 - exp(-iters)
+        ϵ *= (status == :solved) ? 1 - exp(-iters) : 1 + exp(-iters)
     end
 
     (; status, x, y, s, kkt_error, ϵ)
