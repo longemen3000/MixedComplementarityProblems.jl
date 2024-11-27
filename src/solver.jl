@@ -22,7 +22,8 @@ function solve(
     x₀ = zeros(mcp.unconstrained_dimension),
     y₀ = ones(mcp.constrained_dimension),
     tol = 1e-4,
-    max_inner_iters = 20
+    max_inner_iters = 20,
+    max_outer_iters = 20
 )
     x = x₀
     y = y₀
@@ -31,11 +32,12 @@ function solve(
     ϵ = 1.0
     kkt_error = Inf
     status = :solved
-    while kkt_error > tol && ϵ > tol
-        iters = 1
+    outer_iters = 1
+    while kkt_error > tol && ϵ > tol && outer_iters < max_outer_iters
+        inner_iters = 1
         status = :solved
 
-        while kkt_error > ϵ && iters < max_inner_iters
+        while kkt_error > ϵ && inner_iters < max_inner_iters
             # Compute the Newton step.
             # TODO! Can add some adaptive regularization.
             F = mcp.F(x, y, s; θ, ϵ)
@@ -63,10 +65,15 @@ function solve(
             y += α_y * δy
 
             kkt_error = maximum(abs.(F))
-            iters += 1
+            inner_iters += 1
         end
 
-        ϵ *= (status == :solved) ? 1 - exp(-iters) : 1 + exp(-iters)
+        ϵ *= (status == :solved) ? 1 - exp(-inner_iters) : 1 + exp(-inner_iters)
+        outer_iters += 1
+    end
+
+    if outer_iters == max_outer_iters
+        status = :failed
     end
 
     (; status, x, y, s, kkt_error, ϵ)

@@ -14,6 +14,7 @@ using FiniteDiff: FiniteDiff
                                  0 ≤ y ⟂ H(x, y) = Ax - b ≥ 0.
     """
     M = [2 1; 1 2]
+    #    M = [0 1; -1 0]
     A = [1 0; 0 1]
     b = [1; 1]
     θ = rand(2)
