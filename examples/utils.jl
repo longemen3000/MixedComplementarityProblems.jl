@@ -125,12 +125,12 @@ function build_parametric_game(;
         ii in 1:N
     ]
 
-    MCPSolver.ParametricGame(;
+    MixedComplementarityProblems.ParametricGame(;
         test_point = BlockArray(zeros(sum(primal_dims)), primal_dims),
         test_parameter = mortar([
             zeros(state_dim(game.dynamics, ii) + params_per_player) for ii in 1:N
         ]),
-        problems = map(f -> MCPSolver.OptimizationProblem(; objective = f), objectives),
+        problems = map(f -> MixedComplementarityProblems.OptimizationProblem(; objective = f), objectives),
         shared_equality,
         shared_inequality,
     )
@@ -166,19 +166,19 @@ function TrajectoryGamesBase.solve_trajectory_game!(
 )
     # Solve, maybe with warm starting.
     if !isnothing(strategy.last_solution) && strategy.last_solution.status == :solved
-        solution = MCPSolver.solve(
+        solution = MixedComplementarityProblems.solve(
             parametric_game,
             parameter_value;
-            solver_type = MCPSolver.InteriorPoint(),
+            solver_type = MixedComplementarityProblems.InteriorPoint(),
             x₀ = strategy.last_solution.variables.x,
             y₀ = strategy.last_solution.variables.y,
         )
     else
         (; initial_state) = unpack_parameters(parameter_value; game.dynamics)
-        solution = MCPSolver.solve(
+        solution = MixedComplementarityProblems.solve(
             parametric_game,
             parameter_value;
-            solver_type = MCPSolver.InteriorPoint(),
+            solver_type = MixedComplementarityProblems.InteriorPoint(),
             x₀ = [
                 pack_trajectory(zero_input_trajectory(; game, horizon, initial_state))
                 zeros(sum(parametric_game.dims.λ) + parametric_game.dims.λ̃)
@@ -200,7 +200,7 @@ end
 "Receding horizon strategy that supports warm starting."
 Base.@kwdef mutable struct WarmStartRecedingHorizonStrategy
     game::TrajectoryGame
-    parametric_game::MCPSolver.ParametricGame
+    parametric_game::MixedComplementarityProblems.ParametricGame
     receding_horizon_strategy::Any = nothing
     time_last_updated::Int = 0
     turn_length::Int

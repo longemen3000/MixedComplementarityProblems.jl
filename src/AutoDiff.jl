@@ -9,12 +9,12 @@ Modifed from https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl/blo
 
 module AutoDiff
 
-using ..MCPSolver: MCPSolver
+using ..MixedComplementarityProblems: MixedComplementarityProblems
 using ChainRulesCore: ChainRulesCore
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: LinearAlgebra
 
-function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
+function _solve_jacobian_θ(mcp::MixedComplementarityProblems.PrimalDualMCP, solution, θ)
     !isnothing(mcp.∇F_θ) || throw(
         ArgumentError(
             "Missing sensitivities. Set `compute_sensitivities = true` when constructing the PrimalDualMCP.",
@@ -30,13 +30,13 @@ function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
 end
 
 function ChainRulesCore.rrule(
-    ::typeof(MCPSolver.solve),
-    solver_type::MCPSolver.SolverType,
-    mcp::MCPSolver.PrimalDualMCP,
+    ::typeof(MixedComplementarityProblems.solve),
+    solver_type::MixedComplementarityProblems.SolverType,
+    mcp::MixedComplementarityProblems.PrimalDualMCP,
     θ;
     kwargs...,
 )
-    solution = MCPSolver.solve(solver_type, mcp, θ; kwargs...)
+    solution = MixedComplementarityProblems.solve(solver_type, mcp, θ; kwargs...)
     project_to_θ = ChainRulesCore.ProjectTo(θ)
 
     function solve_pullback(∂solution)
@@ -67,9 +67,9 @@ function ChainRulesCore.rrule(
     solution, solve_pullback
 end
 
-function MCPSolver.solve(
-    solver_type::MCPSolver.InteriorPoint,
-    mcp::MCPSolver.PrimalDualMCP,
+function MixedComplementarityProblems.solve(
+    solver_type::MixedComplementarityProblems.InteriorPoint,
+    mcp::MixedComplementarityProblems.PrimalDualMCP,
     θ::AbstractVector{<:ForwardDiff.Dual{T}};
     kwargs...,
 ) where {T}
@@ -77,7 +77,7 @@ function MCPSolver.solve(
     θ_v = ForwardDiff.value.(θ)
     θ_p = ForwardDiff.partials.(θ)
     # forward pass
-    solution = MCPSolver.solve(solver_type, mcp, θ_v; kwargs...)
+    solution = MixedComplementarityProblems.solve(solver_type, mcp, θ_v; kwargs...)
     # backward pass
     ∂z∂θ = _solve_jacobian_θ(mcp, solution, θ_v)
     # downstream gradient

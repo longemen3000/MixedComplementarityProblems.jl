@@ -1,4 +1,4 @@
-module MCPSolver
+module MixedComplementarityProblems
 
 using SparseArrays: SparseArrays
 using FastDifferentiation: FastDifferentiation as FD
@@ -13,4 +13,6 @@ include("solver.jl")
 include("game.jl")
 include("AutoDiff.jl")
 
-end # module MCPSolver
+export PrimalDualMCP, solve, ParametricGame, OptimizationProblem
+
+end # module MixedComplementarityProblems

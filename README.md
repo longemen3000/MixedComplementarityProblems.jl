@@ -1,9 +1,9 @@
-# MCPSolver.jl
+# MixedComplementarityProblems.jl
 
-[![CI](https://github.com/CLeARoboticsLab/MCPSolver.jl/actions/workflows/test.yml/badge.svg)](https://github.com/CLeARoboticsLab/MCPSolver.jl/actions/workflows/test.yml)
+[![CI](https://github.com/CLeARoboticsLab/MixedComplementarityProblems.jl/actions/workflows/test.yml/badge.svg)](https://github.com/CLeARoboticsLab/MixedComplementarityProblems.jl/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-BSD-new)](https://opensource.org/license/bsd-3-clause)
 
-This package provides an easily-customizable interface for expressing mixed complementarity problems (MCPs) which are defined in terms of an arbitrary vector of parameters. `MCPSolver` implements a reasonably high-performance interior point method for solving these problems, and integrates with `ChainRulesCore` and `ForwardDiff` to enable automatic differentiation of solutions with respect to problem parameters.
+This package provides an easily-customizable interface for expressing mixed complementarity problems (MCPs) which are defined in terms of an arbitrary vector of parameters. `MixedComplementarityProblems` implements a reasonably high-performance interior point method for solving these problems, and integrates with `ChainRulesCore` and `ForwardDiff` to enable automatic differentiation of solutions with respect to problem parameters.
 
 ## What are MCPs?
 
@@ -36,10 +36,10 @@ G(x, y; θ) = 0
 0 ≤ y ⟂ H(x, y; θ) ≥ 0 0.
 ```
 
-Now, we can encode this problem and solve it using `MCPSolver` as follows:
+Now, we can encode this problem and solve it using `MixedComplementarityProblems` as follows:
 
 ```julia
-using MCPSolver
+using MixedComplementarityProblems
 
 M = [2 1; 1 2]
 A = [1 0; 0 1]
@@ -49,20 +49,20 @@ b = [1; 1]
 G(x, y; θ) = M * x - θ - A' * y
 H(x, y; θ) = A * x - b
 
-mcp = MCPSolver.PrimalDualMCP(
+mcp = MixedComplementarityProblems.PrimalDualMCP(
     G,
     H;
     unconstrained_dimension = size(M, 1),
     constrained_dimension = length(b),
     parameter_dimension = size(M, 1),
 )
-sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+sol = MixedComplementarityProblems.solve(MixedComplementarityProblems.InteriorPoint(), mcp, θ)
 ```
 
 The solver can easily be warm-started from a given initial guess:
 ```julia
-sol = MCPSolver.solve(
-    MCPSolver.InteriorPoint(),
+sol = MixedComplementarityProblems.solve(
+    MixedComplementarityProblems.InteriorPoint(),
     mcp,
     θ;
     x₀ = # your initial guess
@@ -72,7 +72,7 @@ sol = MCPSolver.solve(
 
 Note that the initial guess for the $y$ variable must be elementwise positive. This is because we are using an interior point method; for further details, refer to `src/solver.jl`.
 
-Finally, `MCPSolver` integrates with `ChainRulesCore` and `ForwardDiff` so you can differentiate through the solver itself! For example, suppose we wanted to find the value of $\theta$ in the problem above which solves
+Finally, `MixedComplementarityProblems` integrates with `ChainRulesCore` and `ForwardDiff` so you can differentiate through the solver itself! For example, suppose we wanted to find the value of $\theta$ in the problem above which solves
 ```displaymath
 min_{θ, x, y} f(x, y)
 s.t. (x, y) solves MCP(θ).
@@ -80,7 +80,7 @@ s.t. (x, y) solves MCP(θ).
 
 We could do so by initializing with a particular value of $\theta$ and then iteratively descending the gradient $\nabla_\theta f$, which we can easily compute via:
 ```julia
-mcp = MCPSolver.PrimalDualMCP(
+mcp = MixedComplementarityProblems.PrimalDualMCP(
     G,
     H;
     unconstrained_dimension = size(M, 1),
@@ -90,7 +90,7 @@ mcp = MCPSolver.PrimalDualMCP(
 )
 
 function f(θ)
-    sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+    sol = MixedComplementarityProblems.solve(MixedComplementarityProblems.InteriorPoint(), mcp, θ)
 
     # Some example objective function that depends on `x` and `y`.
     sum(sol.x .^ 2) + sum(sol.y .^ 2)
@@ -101,7 +101,7 @@ end
 
 ## A fancier demo
 
-If you'd like to get a better sense of the kinds of problems `MCPSolver` was built for, check out the example in `examples/lane_change.jl`. This problem encodes a two-player game in which each player is driving a car and wishes to choose a trajectory that tracks a preferred lane center, maintains a desired speed, minimizes control actuation effort, and avoids collision with the other player. The problem is naturally expressed as a noncooperative game, and encoded as a mixed complementarity problem.
+If you'd like to get a better sense of the kinds of problems `MixedComplementarityProblems` was built for, check out the example in `examples/lane_change.jl`. This problem encodes a two-player game in which each player is driving a car and wishes to choose a trajectory that tracks a preferred lane center, maintains a desired speed, minimizes control actuation effort, and avoids collision with the other player. The problem is naturally expressed as a noncooperative game, and encoded as a mixed complementarity problem.
 
 To run the example, activate the `examples` environment
 ```julia
@@ -117,7 +117,7 @@ This will generate a video animation and save it as `sim_steps.mp4`, and it shou
 
 ## Acknowledgement and future plans
 
-This project inherits many key ideas from [ParametricMCPs](https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl), which provides essentially identical functionality but which currently only supports the (closed-source, but otherwise excellent [PATH](https://pages.cs.wisc.edu/~ferris/path.html) solver). Ultimately, this `MCPSolver` will likely merge with `ParametricMCPs` to provide an identical frontend and allow users a flexible choice of backend solver. Currently, `MCPSolver` replicates a substantially similar interface as that provided by `ParametricMCPs`, but there are some (potentially annoying) differences that users should take care to notice, e.g., in the function signature for `solve(...)`.
+This project inherits many key ideas from [ParametricMCPs](https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl), which provides essentially identical functionality but which currently only supports the (closed-source, but otherwise excellent [PATH](https://pages.cs.wisc.edu/~ferris/path.html) solver). Ultimately, this `MixedComplementarityProblems` will likely merge with `ParametricMCPs` to provide an identical frontend and allow users a flexible choice of backend solver. Currently, `MixedComplementarityProblems` replicates a substantially similar interface as that provided by `ParametricMCPs`, but there are some (potentially annoying) differences that users should take care to notice, e.g., in the function signature for `solve(...)`.
 
 ## Other related projects
 

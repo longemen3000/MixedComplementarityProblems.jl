@@ -1,6 +1,6 @@
 using Test: @testset, @test
 
-using MCPSolver
+using MixedComplementarityProblems
 using BlockArrays: BlockArray, Block, mortar, blocks
 using Zygote: Zygote
 using FiniteDiff: FiniteDiff
@@ -38,32 +38,32 @@ using FiniteDiff: FiniteDiff
     end
 
     @testset "BasicCallableConstructor" begin
-        mcp = MCPSolver.PrimalDualMCP(
+        mcp = MixedComplementarityProblems.PrimalDualMCP(
             G,
             H;
             unconstrained_dimension = size(M, 1),
             constrained_dimension = length(b),
             parameter_dimension = size(M, 1),
         )
-        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+        sol = MixedComplementarityProblems.solve(MixedComplementarityProblems.InteriorPoint(), mcp, θ)
 
         check_solution(sol)
     end
 
     @testset "AlternativeCallableConstructor" begin
-        mcp = MCPSolver.PrimalDualMCP(
+        mcp = MixedComplementarityProblems.PrimalDualMCP(
             K,
             [fill(-Inf, size(M, 1)); fill(0, length(b))],
             fill(Inf, size(M, 1) + length(b));
             parameter_dimension = size(M, 1),
         )
-        sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+        sol = MixedComplementarityProblems.solve(MixedComplementarityProblems.InteriorPoint(), mcp, θ)
 
         check_solution(sol)
     end
 
     @testset "AutodifferentationTests" begin
-        mcp = MCPSolver.PrimalDualMCP(
+        mcp = MixedComplementarityProblems.PrimalDualMCP(
             G,
             H;
             unconstrained_dimension = size(M, 1),
@@ -73,7 +73,7 @@ using FiniteDiff: FiniteDiff
         )
 
         function f(θ)
-            sol = MCPSolver.solve(MCPSolver.InteriorPoint(), mcp, θ)
+            sol = MixedComplementarityProblems.solve(MixedComplementarityProblems.InteriorPoint(), mcp, θ)
             sum(sol.x .^ 2) + sum(sol.y .^ 2)
         end
 
@@ -88,16 +88,16 @@ end
 @testset "ParametricGameTests" begin
     """ Test the game -> MCP interface. """
     lim = 0.5
-    game = MCPSolver.ParametricGame(;
+    game = MixedComplementarityProblems.ParametricGame(;
         test_point = mortar([[1, 1], [1, 1]]),
         test_parameter = mortar([[1, 1], [1, 1]]),
         problems = [
-            MCPSolver.OptimizationProblem(;
+            MixedComplementarityProblems.OptimizationProblem(;
                 objective = (x, θi) -> sum((x[Block(1)] - θi) .^ 2),
                 private_inequality = (x, θi) ->
                     [-x[Block(1)] .+ lim; x[Block(1)] .+ lim],
             ),
-            MCPSolver.OptimizationProblem(;
+            MixedComplementarityProblems.OptimizationProblem(;
                 objective = (x, θi) -> sum((x[Block(2)] - θi) .^ 2),
                 private_inequality = (x, θi) ->
                     [-x[Block(2)] .+ lim; x[Block(2)] .+ lim],
@@ -107,7 +107,7 @@ end
 
     θ = mortar([[-1, 0], [1, 1]])
     tol = 1e-4
-    (; status, primals, variables, kkt_error) = MCPSolver.solve(game, θ; tol)
+    (; status, primals, variables, kkt_error) = MixedComplementarityProblems.solve(game, θ; tol)
 
     for ii in 1:2
         @test all(isapprox.(primals[ii], clamp.(θ[Block(ii)], -lim, lim), atol = 10tol))
