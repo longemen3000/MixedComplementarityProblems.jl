@@ -16,13 +16,13 @@ As discussed below, this package replicates functionality already available in [
 ## Quickstart guide
 
 Suppose we have the following quadratic program:
-```math
+```displaymath
 &\min_x~ &\frac{1}{2} x^\top M x - θ^\top x\\
 &s.t. &Ax - b \ge 0.
 ```
 
 The KKT conditions for this problem can be expressed as follows:
-```math
+```displaymath
 G(x, y; θ) = M x - θ - A^\top y &= 0\\
 H(x, y; θ) = A x - b &\ge 0\\
 y &\ge 0\\
@@ -31,7 +31,7 @@ y^\top H(x, y; θ) = 0,
 where $y$ is the Lagrange multiplier associated to the constraint $Ax - b \ge 0$ in the original problem.
 
 This is precisely a MCP, whose standard form is:
-```math
+```displaymath
 G(x, y; θ) &= 0\\
 0 \le y \perp H(x, y; θ) &\ge 0.
 ```
