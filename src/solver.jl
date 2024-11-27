@@ -23,7 +23,7 @@ function solve(
     y₀ = ones(mcp.constrained_dimension),
     tol = 1e-4,
     max_inner_iters = 20,
-    max_outer_iters = 20
+    max_outer_iters = 50
 )
     x = x₀
     y = y₀
