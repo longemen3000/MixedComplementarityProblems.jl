@@ -7,8 +7,6 @@ using LinearAlgebra: I, norm, eigvals
 using BlockArrays: blocks, blocksizes
 using TrajectoryGamesBase: to_blockvector
 
-using Infiltrator
-
 include("SymbolicUtils.jl")
 include("mcp.jl")
 include("solver.jl")

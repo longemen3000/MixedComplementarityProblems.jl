@@ -45,8 +45,6 @@ using Makie: Makie
 using LinearAlgebra: norm_sqr, norm
 using ProgressMeter: ProgressMeter
 
-using Infiltrator
-
 include("utils.jl")
 include("lane_change.jl")
 

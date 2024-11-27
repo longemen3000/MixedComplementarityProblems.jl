@@ -13,7 +13,6 @@ using ..MCPSolver: MCPSolver
 using ChainRulesCore: ChainRulesCore
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: LinearAlgebra
-using Infiltrator
 
 function _solve_jacobian_θ(mcp::MCPSolver.PrimalDualMCP, solution, θ)
     !isnothing(mcp.∇F_θ) || throw(
