@@ -13,6 +13,13 @@ Mixed complementarity problems (MCPs) are a class of mathematical program, and t
 
 As discussed below, this package replicates functionality already available in [ParametricMCPs](https://github.com/JuliaGameTheoreticPlanning/ParametricMCPs.jl). Our intention here is to provide an easily customizable and open-source solver with efficiency and reliability that is at least comparable with the [PATH](https://pages.cs.wisc.edu/~ferris/path.html) solver which `ParametricMCPs` uses under the hood (actually, it hooks into the interface to the `PATH` binaries which is provided by another wonderful package, [PATHSolver](https://github.com/chkwon/PATHSolver.jl)). Hopefully, users will find it useful to modify the interior point solver provided in this package for their own application problems, use it for highly parallelized implementations (since it is in pure Julia), etc.
 
+## Installation
+
+`MixedComplementarityProblems` is a registered package and can be installed with the standard Julia package manager as follows:
+```julia
+] add MixedComplementarityProblems
+```
+
 ## Quickstart guide
 
 Suppose we have the following quadratic program:
