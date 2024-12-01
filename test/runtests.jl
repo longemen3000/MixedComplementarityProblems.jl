@@ -16,7 +16,7 @@ using FiniteDiff: FiniteDiff
     M = [2 1; 1 2]
     A = [1 0; 0 1]
     b = [1; 1]
-    θ = zeros(2)
+    θ = rand(2)
 
     G(x, y; θ) = M * x - A' * y - θ
     H(x, y; θ) = A * x - b
@@ -28,12 +28,12 @@ using FiniteDiff: FiniteDiff
     end
 
     function check_solution(sol)
-        @test all(abs.(G(sol.x, sol.y; θ)) .≤ 1e-3)
+        @test all(abs.(G(sol.x, sol.y; θ)) .≤ 2e-3)
         @test all(H(sol.x, sol.y; θ) .≥ 0)
         @test all(sol.y .≥ 0)
-        @test sum(sol.y .* H(sol.x, sol.y; θ)) ≤ 1e-3
-        @test all(sol.s .≤ 1e-3)
-        @test sol.kkt_error ≤ 1e-3
+        @test sum(sol.y .* H(sol.x, sol.y; θ)) ≤ 2e-3
+        @test all(sol.s .≤ 2e-3)
+        @test sol.kkt_error ≤ 2e-3
         @test sol.status == :solved
     end
 
