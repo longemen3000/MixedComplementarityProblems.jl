@@ -15,7 +15,6 @@ collision-avoidance.
 
 module TrajectoryExamples
 
-push!(LOAD_PATH, pwd() * "/../src")
 using MixedComplementarityProblems: MixedComplementarityProblems
 
 using LazySets: LazySets
