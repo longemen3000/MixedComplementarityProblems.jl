@@ -30,7 +30,7 @@ s.t. Ax - b ≥ 0.
 
 The KKT conditions for this problem can be expressed as follows:
 ```displaymath
-G(x, y; θ) = Mx - Aᵀ y - θ = 0
+G(x, y; θ) = Mx  - θ - Aᵀ y = 0
 H(x, y; θ) = Ax - b ≥ 0
 y ≥ 0
 yᵀ H(x, y; θ) = 0,
@@ -40,7 +40,7 @@ where `y` is the Lagrange multiplier associated to the constraint `Ax - b ≥ 0`
 This is precisely a MCP, whose standard form is:
 ```displaymath
 G(x, y; θ) = 0
-0 ≤ y ⟂ H(x, y; θ) ≥ 0 0.
+0 ≤ y ⟂ H(x, y; θ) ≥ 0.
 ```
 
 Now, we can encode this problem and solve it using `MixedComplementarityProblems` as follows:
