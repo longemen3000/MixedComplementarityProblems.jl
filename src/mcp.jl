@@ -47,7 +47,6 @@ function PrimalDualMCP(
         y_symbolic,
         θ_symbolic;
         compute_sensitivities,
-        backend,
         backend_options,
     )
 end
