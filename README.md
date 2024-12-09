@@ -30,7 +30,7 @@ s.t. Ax - b ≥ 0.
 
 The KKT conditions for this problem can be expressed as follows:
 ```displaymath
-G(x, y; θ) = Mx  - θ - Aᵀ y = 0
+G(x, y; θ) = Mx - θ - Aᵀ y = 0
 H(x, y; θ) = Ax - b ≥ 0
 y ≥ 0
 yᵀ H(x, y; θ) = 0,
