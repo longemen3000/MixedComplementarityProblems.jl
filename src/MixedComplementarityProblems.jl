@@ -3,7 +3,7 @@ module MixedComplementarityProblems
 using SparseArrays: SparseArrays
 using FastDifferentiation: FastDifferentiation as FD
 using Symbolics: Symbolics
-using LinearAlgebra: I, norm, eigvals
+using LinearAlgebra: LinearAlgebra, I, norm, eigvals
 using BlockArrays: blocks, blocksizes
 using TrajectoryGamesBase: to_blockvector
 

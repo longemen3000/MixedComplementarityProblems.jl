@@ -87,7 +87,7 @@ function PrimalDualMCP(
             backend_options,
         )
 
-        (result, x, y, s; θ, ϵ) -> _F(result, [x; y; s; θ; ϵ])
+        (result, x, y, s; θ, ϵ) -> _F!(result, [x; y; s; θ; ϵ])
     end
 
     ∇F_z! = let
@@ -101,9 +101,13 @@ function PrimalDualMCP(
 
         rows, cols, _ = SparseArrays.findnz(∇F_symbolic)
         constant_entries = get_constant_entries(∇F_symbolic, z_symbolic)
-        SparseFunction(rows, cols, size(∇F_symbolic), constant_entries) do (result, x, y, s; θ, ϵ)
-            _∇F!(result, [x; y; s; θ; ϵ])
-        end
+        SparseFunction(
+            (result, x, y, s; θ, ϵ) -> _∇F!(result, [x; y; s; θ; ϵ]),
+            rows,
+            cols,
+            size(∇F_symbolic),
+            constant_entries,
+        )
     end
 
     ∇F_θ! =
@@ -113,20 +117,19 @@ function PrimalDualMCP(
             _∇F! = SymbolicUtils.build_function(
                 ∇F_symbolic,
                 [z_symbolic; θ_symbolic; ϵ_symbolic];
-                in_place = false,
+                in_place = true,
                 backend_options,
             )
 
             rows, cols, _ = SparseArrays.findnz(∇F_symbolic)
             constant_entries = get_constant_entries(∇F_symbolic, θ_symbolic)
             SparseFunction(
+                (result, x, y, s; θ, ϵ) -> _∇F!(result, [x; y; s; θ; ϵ]),
                 rows,
                 cols,
                 size(∇F_symbolic),
                 constant_entries,
-            ) do (result, x, y, s; θ, ϵ)
-                _∇F!(result, [x; y; s; θ; ϵ])
-            end
+            )
         end
 
     PrimalDualMCP(F!, ∇F_z!, ∇F_θ!, length(x_symbolic), length(y_symbolic))
