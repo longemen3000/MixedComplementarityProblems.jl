@@ -52,11 +52,7 @@ function solve(
             # TODO! Can add some adaptive regularization.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            LinearAlgebra.ldiv!(
-                δz,
-                LinearAlgebra.qr(-collect(∇F), LinearAlgebra.ColumnNorm()),
-                collect(F),
-            )
+            δz .= -∇F \ F
 
             # Fraction to the boundary linesearch.
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol)
