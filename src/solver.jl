@@ -27,7 +27,7 @@ function solve(
     max_outer_iters = 50,
 )
     # Set up common memory.
-    ∇F = get_result_buffer(mcp.∇F_z!)
+    ∇F = mcp.∇F_z!.result_buffer
     F = zeros(mcp.unconstrained_dimension + 2mcp.constrained_dimension)
     δz = zeros(mcp.unconstrained_dimension + 2mcp.constrained_dimension)
     δx = @view δz[1:(mcp.unconstrained_dimension)]
