@@ -43,13 +43,21 @@ function ParametricGame(;
 
     # Define primal and dual variables for the game, and game parameters..
     # Note that BlockArrays can handle blocks of zero size.
-    backend = SymbolicUtils.SymbolicsBackend()
-    x = SymbolicUtils.make_variables(backend, :x, sum(dims.x)) |> to_blockvector(dims.x)
-    λ = SymbolicUtils.make_variables(backend, :λ, sum(dims.λ)) |> to_blockvector(dims.λ)
-    μ = SymbolicUtils.make_variables(backend, :μ, sum(dims.μ)) |> to_blockvector(dims.μ)
-    λ̃ = SymbolicUtils.make_variables(backend, :λ̃, dims.λ̃)
-    μ̃ = SymbolicUtils.make_variables(backend, :μ̃, dims.μ̃)
-    θ = SymbolicUtils.make_variables(backend, :θ, sum(dims.θ)) |> to_blockvector(dims.θ)
+    backend = SymbolicTracingUtils.SymbolicsBackend()
+    x =
+        SymbolicTracingUtils.make_variables(backend, :x, sum(dims.x)) |>
+        to_blockvector(dims.x)
+    λ =
+        SymbolicTracingUtils.make_variables(backend, :λ, sum(dims.λ)) |>
+        to_blockvector(dims.λ)
+    μ =
+        SymbolicTracingUtils.make_variables(backend, :μ, sum(dims.μ)) |>
+        to_blockvector(dims.μ)
+    λ̃ = SymbolicTracingUtils.make_variables(backend, :λ̃, dims.λ̃)
+    μ̃ = SymbolicTracingUtils.make_variables(backend, :μ̃, dims.μ̃)
+    θ =
+        SymbolicTracingUtils.make_variables(backend, :θ, sum(dims.θ)) |>
+        to_blockvector(dims.θ)
 
     # Build symbolic expressions for objectives and constraints.
     fs = map(problems, blocks(θ)) do p, θi
@@ -70,7 +78,7 @@ function ParametricGame(;
         L =
             f - (isnothing(g) ? 0 : sum(λi .* g)) - (isnothing(h) ? 0 : sum(μi .* h)) - (isnothing(g̃) ? 0 : sum(λ̃ .* g̃)) -
             (isnothing(h̃) ? 0 : sum(μ̃ .* h̃))
-        SymbolicUtils.gradient(L, xi)
+        SymbolicTracingUtils.gradient(L, xi)
     end
 
     # Build MCP representation.

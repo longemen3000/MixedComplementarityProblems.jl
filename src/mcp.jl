@@ -31,12 +31,12 @@ function PrimalDualMCP(
     constrained_dimension,
     parameter_dimension,
     compute_sensitivities = false,
-    backend = SymbolicUtils.SymbolicsBackend(),
+    backend = SymbolicTracingUtils.SymbolicsBackend(),
     backend_options = (;),
 )
-    x_symbolic = SymbolicUtils.make_variables(backend, :x, unconstrained_dimension)
-    y_symbolic = SymbolicUtils.make_variables(backend, :y, constrained_dimension)
-    θ_symbolic = SymbolicUtils.make_variables(backend, :θ, parameter_dimension)
+    x_symbolic = SymbolicTracingUtils.make_variables(backend, :x, unconstrained_dimension)
+    y_symbolic = SymbolicTracingUtils.make_variables(backend, :y, constrained_dimension)
+    θ_symbolic = SymbolicTracingUtils.make_variables(backend, :θ, parameter_dimension)
     G_symbolic = G(x_symbolic, y_symbolic; θ = θ_symbolic)
     H_symbolic = H(x_symbolic, y_symbolic; θ = θ_symbolic)
 
@@ -60,17 +60,17 @@ function PrimalDualMCP(
     θ_symbolic::Vector{T};
     compute_sensitivities = false,
     backend_options = (;),
-) where {T<:Union{FD.Node,Symbolics.Num}}
+) where {T<:Union{SymbolicTracingUtils.FD.Node,SymbolicTracingUtils.Symbolics.Num}}
     # Create symbolic slack variable `s` and parameter `ϵ`.
-    if T == FD.Node
-        backend = SymbolicUtils.FastDifferentiationBackend()
+    if T == SymbolicTracingUtils.FD.Node
+        backend = SymbolicTracingUtils.FastDifferentiationBackend()
     else
-        @assert T === Symbolics.Num
-        backend = SymbolicUtils.SymbolicsBackend()
+        @assert T === SymbolicTracingUtils.Symbolics.Num
+        backend = SymbolicTracingUtils.SymbolicsBackend()
     end
 
-    s_symbolic = SymbolicUtils.make_variables(backend, :s, length(y_symbolic))
-    ϵ_symbolic = only(SymbolicUtils.make_variables(backend, :ϵ, 1))
+    s_symbolic = SymbolicTracingUtils.make_variables(backend, :s, length(y_symbolic))
+    ϵ_symbolic = only(SymbolicTracingUtils.make_variables(backend, :ϵ, 1))
     z_symbolic = [x_symbolic; y_symbolic; s_symbolic]
 
     F_symbolic = [
@@ -80,7 +80,7 @@ function PrimalDualMCP(
     ]
 
     F! = let
-        _F! = SymbolicUtils.build_function(
+        _F! = SymbolicTracingUtils.build_function(
             F_symbolic,
             x_symbolic,
             y_symbolic,
@@ -95,8 +95,8 @@ function PrimalDualMCP(
     end
 
     ∇F_z! = let
-        ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, z_symbolic)
-        _∇F! = SymbolicUtils.build_function(
+        ∇F_symbolic = SymbolicTracingUtils.sparse_jacobian(F_symbolic, z_symbolic)
+        _∇F! = SymbolicTracingUtils.build_function(
             ∇F_symbolic,
             x_symbolic,
             y_symbolic,
@@ -108,8 +108,9 @@ function PrimalDualMCP(
         )
 
         rows, cols, _ = SparseArrays.findnz(∇F_symbolic)
-        constant_entries = get_constant_entries(∇F_symbolic, z_symbolic)
-        SparseFunction(
+        constant_entries =
+            SymbolicTracingUtils.get_constant_entries(∇F_symbolic, z_symbolic)
+        SymbolicTracingUtils.SparseFunction(
             (result, x, y, s; θ, ϵ) -> _∇F!(result, x, y, s, θ, ϵ),
             rows,
             cols,
@@ -121,8 +122,8 @@ function PrimalDualMCP(
     ∇F_θ! =
         !compute_sensitivities ? nothing :
         let
-            ∇F_symbolic = SymbolicUtils.sparse_jacobian(F_symbolic, θ_symbolic)
-            _∇F! = SymbolicUtils.build_function(
+            ∇F_symbolic = SymbolicTracingUtils.sparse_jacobian(F_symbolic, θ_symbolic)
+            _∇F! = SymbolicTracingUtils.build_function(
                 ∇F_symbolic,
                 x_symbolic,
                 y_symbolic,
@@ -134,8 +135,9 @@ function PrimalDualMCP(
             )
 
             rows, cols, _ = SparseArrays.findnz(∇F_symbolic)
-            constant_entries = get_constant_entries(∇F_symbolic, θ_symbolic)
-            SparseFunction(
+            constant_entries =
+                SymbolicTracingUtils.get_constant_entries(∇F_symbolic, θ_symbolic)
+            SymbolicTracingUtils.SparseFunction(
                 (result, x, y, s; θ, ϵ) -> _∇F!(result, x, y, s, θ, ϵ),
                 rows,
                 cols,
@@ -156,11 +158,11 @@ function PrimalDualMCP(
     upper_bounds::Vector;
     parameter_dimension,
     compute_sensitivities = false,
-    backend = SymbolicUtils.SymbolicsBackend(),
+    backend = SymbolicTracingUtils.SymbolicsBackend(),
     backend_options = (;),
 )
-    z_symbolic = SymbolicUtils.make_variables(backend, :z, length(lower_bounds))
-    θ_symbolic = SymbolicUtils.make_variables(backend, :θ, parameter_dimension)
+    z_symbolic = SymbolicTracingUtils.make_variables(backend, :z, length(lower_bounds))
+    θ_symbolic = SymbolicTracingUtils.make_variables(backend, :θ, parameter_dimension)
     K_symbolic = K(z_symbolic; θ = θ_symbolic)
 
     PrimalDualMCP(
@@ -185,7 +187,7 @@ function PrimalDualMCP(
     upper_bounds::Vector;
     compute_sensitivities = false,
     backend_options = (;),
-) where {T<:Union{FD.Node,Symbolics.Num}}
+) where {T<:Union{SymbolicTracingUtils.FD.Node,SymbolicTracingUtils.Symbolics.Num}}
     @assert all(isinf.(upper_bounds)) && all(isinf.(lower_bounds) .|| lower_bounds .== 0)
 
     unconstrained_indices = findall(isinf, lower_bounds)

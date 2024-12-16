@@ -13,6 +13,7 @@ using ..MixedComplementarityProblems: MixedComplementarityProblems
 using ChainRulesCore: ChainRulesCore
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: LinearAlgebra
+using SymbolicTracingUtils: SymbolicTracingUtils
 
 function _solve_jacobian_θ(mcp::MixedComplementarityProblems.PrimalDualMCP, solution, θ)
     !isnothing(mcp.∇F_θ!) || throw(
@@ -24,13 +25,13 @@ function _solve_jacobian_θ(mcp::MixedComplementarityProblems.PrimalDualMCP, sol
     (; x, y, s, ϵ) = solution
 
     ∇F_z = let
-        ∇F = MixedComplementarityProblems.get_result_buffer(mcp.∇F_z!)
+        ∇F = SymbolicTracingUtils.get_result_buffer(mcp.∇F_z!)
         mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
         ∇F
     end
 
     ∇F_θ = let
-        ∇F = MixedComplementarityProblems.get_result_buffer(mcp.∇F_θ!)
+        ∇F = SymbolicTracingUtils.get_result_buffer(mcp.∇F_θ!)
         mcp.∇F_θ!(∇F, x, y, s; θ, ϵ)
         ∇F
     end
