@@ -27,7 +27,7 @@ function solve(
     max_outer_iters = 50,
 )
     # Set up common memory.
-    ∇F = SymbolicTracingUtils.get_result_buffer(mcp.∇F_z!)
+    ∇F = mcp.∇F_z!.result_buffer
     F = zeros(mcp.unconstrained_dimension + 2mcp.constrained_dimension)
     δz = zeros(mcp.unconstrained_dimension + 2mcp.constrained_dimension)
     δx = @view δz[1:(mcp.unconstrained_dimension)]
@@ -52,7 +52,7 @@ function solve(
             # TODO! Can add some adaptive regularization.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            δz .= -∇F \ F
+            δz .= (∇F \ F) .* -1
 
             # Fraction to the boundary linesearch.
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol)
@@ -65,11 +65,11 @@ function solve(
             end
 
             # Update variables accordingly.
-            x += α_s * δx
-            s += α_s * δs
-            y += α_y * δy
+            @. x += α_s * δx
+            @. s += α_s * δs
+            @. y += α_y * δy
 
-            kkt_error = maximum(abs.(F))
+            kkt_error = norm(F, Inf)
             inner_iters += 1
         end
 
@@ -89,7 +89,7 @@ end
 """
 function fraction_to_the_boundary_linesearch(v, δ; τ = 0.995, decay = 0.5, tol = 1e-4)
     α = 1.0
-    while any(v + α * δ .< (1 - τ) * v)
+    while any(@. v + α * δ < (1 - τ) * v)
         if α < tol
             return NaN
         end

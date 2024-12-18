@@ -25,13 +25,13 @@ function _solve_jacobian_θ(mcp::MixedComplementarityProblems.PrimalDualMCP, sol
     (; x, y, s, ϵ) = solution
 
     ∇F_z = let
-        ∇F = SymbolicTracingUtils.get_result_buffer(mcp.∇F_z!)
+        ∇F = mcp.∇F_z!.result_buffer
         mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
         ∇F
     end
 
     ∇F_θ = let
-        ∇F = SymbolicTracingUtils.get_result_buffer(mcp.∇F_θ!)
+        ∇F = mcp.∇F_θ!.result_buffer
         mcp.∇F_θ!(∇F, x, y, s; θ, ϵ)
         ∇F
     end
