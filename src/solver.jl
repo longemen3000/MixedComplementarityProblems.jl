@@ -27,7 +27,7 @@ function solve(
     max_outer_iters = 50,
     tightening_rate = 1,
     loosening_rate = 1,
-    verbose = false
+    verbose = false,
 )
     # Set up common memory.
     ∇F = mcp.∇F_z!.result_buffer
