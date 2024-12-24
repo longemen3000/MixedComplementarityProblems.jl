@@ -32,16 +32,16 @@ end
 
 "Benchmark interior point solver against PATH on a bunch of random QPs."
 function benchmark(;
-    num_problems = 100,
-    num_samples_per_problem = 10,
-    num_primals = 1000,
-    num_inequalities = 1000,
+    num_problems = 10,
+    num_samples_per_problem = 100,
+    num_primals = 10,
+    num_inequalities = 10,
 )
     rng = Random.MersenneTwister(1)
 
     # Generate random problems and parameters.
     problems = @showprogress desc = "Generating test problems..." map(1:num_problems) do _
-        problem = generate_test_problem(rng; num_primals, num_inequalities)
+        generate_test_problem(rng; num_primals, num_inequalities)
     end
 
     θs = map(1:num_samples_per_problem) do _
