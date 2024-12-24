@@ -67,9 +67,12 @@ end
 "Benchmark interior point solver against PATH on a bunch of random QPs."
 function benchmark(;
     num_samples = 1000,
-    num_primals = 100,
-    num_inequalities = 100,
+    num_primals = 200,
+    num_inequalities = 200,
     sparsity_rate = 0.9,
+    ip_mcp = nothing,
+    path_mcp = nothing,
+    ip_kwargs = (;),
 )
     rng = Random.MersenneTwister(1)
 
@@ -84,37 +87,42 @@ function benchmark(;
     # Generate corresponding MCPs.
     @info "Generating IP MCP..."
     parameter_dimension = length(first(θs))
-    ip_mcp = MixedComplementarityProblems.PrimalDualMCP(
-        problem.G,
-        problem.H;
-        unconstrained_dimension = num_primals,
-        constrained_dimension = num_inequalities,
-        parameter_dimension,
-    )
+    ip_mcp =
+        !isnothing(ip_mcp) ? ip_mcp :
+        MixedComplementarityProblems.PrimalDualMCP(
+            problem.G,
+            problem.H;
+            unconstrained_dimension = num_primals,
+            constrained_dimension = num_inequalities,
+            parameter_dimension,
+        )
 
     @info "Generating PATH MCP..."
     lower_bounds = [fill(-Inf, num_primals); fill(0, num_inequalities)]
     upper_bounds = fill(Inf, num_primals + num_inequalities)
-    path_mcp = ParametricMCPs.ParametricMCP(
-        problem.K,
-        lower_bounds,
-        upper_bounds,
-        parameter_dimension,
-    )
+    path_mcp =
+        !isnothing(path_mcp) ? path_mcp :
+        ParametricMCPs.ParametricMCP(
+            problem.K,
+            lower_bounds,
+            upper_bounds,
+            parameter_dimension,
+        )
 
     # Warm up the solvers.
     @info "Warming up IP solver..."
     MixedComplementarityProblems.solve(
         MixedComplementarityProblems.InteriorPoint(),
         ip_mcp,
-        first(θs),
+        first(θs);
+        ip_kwargs...,
     )
 
     @info "Warming up PATH solver..."
     ParametricMCPs.solve(path_mcp, first(θs))
 
     # Solve and time.
-    ip = @showprogress desc = "Solving IP MCPs..." map(θs) do θ
+    ip_data = @showprogress desc = "Solving IP MCPs..." map(θs) do θ
         elapsed_time = @elapsed sol = MixedComplementarityProblems.solve(
             MixedComplementarityProblems.InteriorPoint(),
             ip_mcp,
@@ -124,14 +132,14 @@ function benchmark(;
         (; elapsed_time, success = sol.status == :solved)
     end
 
-    path = @showprogress desc = "Solving PATH MCPs..." map(θs) do θ
+    path_data = @showprogress desc = "Solving PATH MCPs..." map(θs) do θ
         # Solve and time.
         elapsed_time = @elapsed sol = ParametricMCPs.solve(path_mcp, θ)
 
         (; elapsed_time, success = sol.status == PATHSolver.MCP_Solved)
     end
 
-    (; ip, path)
+    (; ip_mcp, path_mcp, ip_data, path_data)
 end
 
 "Compute summary statistics from solver benchmark data."
@@ -140,7 +148,7 @@ function summary_statistics(data)
         (; success_rate = fraction_solved(solver_data), runtime_stats(solver_data)...)
     end
 
-    (; ip = accumulate_stats(data.ip), path = accumulate_stats(data.path))
+    (; ip = accumulate_stats(data.ip_data), path = accumulate_stats(data.path_data))
 end
 
 "Estimate mean and standard deviation of runtimes for all problems."
