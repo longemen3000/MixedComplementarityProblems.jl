@@ -65,7 +65,7 @@ function benchmark(;
         ParametricMCPs.ParametricMCP(p.K, lower_bounds, upper_bounds, num_primals)
     end
 
-    ip_times = @showprogress desc = "Solving IP MCPs..." map(ip_mcps) do mcp
+    ip = @showprogress desc = "Solving IP MCPs..." map(ip_mcps) do mcp
         # Make sure everything is compiled in a dry run.
         MixedComplementarityProblems.solve(
             MixedComplementarityProblems.InteriorPoint(),
@@ -81,11 +81,11 @@ function benchmark(;
                 θ,
             )
 
-            (; elapsed_time, sol.status)
+            (; elapsed_time, success = sol.status == :solved)
         end
     end
 
-    path_times = @showprogress desc = "Solving PATH MCPs..." map(path_mcps) do mcp
+    path = @showprogress desc = "Solving PATH MCPs..." map(path_mcps) do mcp
         # Make sure everything is compiled in a dry run.
         ParametricMCPs.solve(mcp, zeros(num_primals))
 
@@ -93,9 +93,43 @@ function benchmark(;
         map(θs) do θ
             elapsed_time = @elapsed sol = ParametricMCPs.solve(mcp, θ)
 
-            (; elapsed_time, sol.status)
+            (; elapsed_time, success = sol.status == PATHSolver.MCP_Solved)
         end
     end
 
-    (; ip_times, path_times)
+    (; ip, path)
+end
+
+"Compute summary statistics from solver benchmark data."
+function summary_statistics(data)
+    accumulate_stats(solver_data) = begin
+        (; success_rate = fraction_solved(solver_data), runtime_stats(solver_data)...)
+    end
+
+    (; ip = accumulate_stats(data.ip), path = accumulate_stats(data.path))
+end
+
+"Estimate mean and standard deviation of runtimes for all problems."
+function runtime_stats(solver_data)
+    stats = map(solver_data) do problem_data
+        filtered_times = map(
+            datum -> datum.elapsed_time,
+            filter(datum -> datum.success, problem_data),
+        )
+        μ = Statistics.mean(filtered_times)
+        σ = Statistics.stdm(filtered_times, μ)
+
+        (; μ, σ)
+    end
+
+    μ = map(datum -> datum.μ, stats)
+    σ = map(datum -> datum.σ, stats)
+    (; μ, σ, mean_μ = Statistics.mean(μ), mean_σ = Statistics.mean(σ))
+end
+
+"Compute fraction of problems solved."
+function fraction_solved(solver_data)
+    Statistics.mean(solver_data) do problem_data
+        Statistics.mean(datum -> datum.success, problem_data)
+    end
 end
