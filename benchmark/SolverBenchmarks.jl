@@ -5,6 +5,7 @@ using MixedComplementarityProblems: MixedComplementarityProblems
 using ParametricMCPs: ParametricMCPs
 using Random: Random
 using Statistics: Statistics
+using Distributions: Distributions
 using PATHSolver: PATHSolver
 using ProgressMeter: @showprogress
 

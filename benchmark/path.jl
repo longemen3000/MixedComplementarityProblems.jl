@@ -9,13 +9,20 @@ function generate_test_problem(
     rng = Random.MersenneTwister(1);
     num_primals = 1000,
     num_inequalities = 1000,
+    sparsity_rate = 0.9,
 )
+    bernoulli = Distributions.Bernoulli(1 - sparsity_rate)
+
     M = let
-        P = randn(rng, num_primals, num_primals)
+        P =
+            randn(rng, num_primals, num_primals) .*
+            rand(rng, bernoulli, num_primals, num_primals)
         P' * P
     end
 
-    A = randn(rng, num_inequalities, num_primals)
+    A =
+        randn(rng, num_inequalities, num_primals) .*
+        rand(rng, bernoulli, num_inequalities, num_primals)
     b = randn(rng, num_inequalities)
 
     G(x, y; θ) = M * x - θ - A' * y
@@ -34,14 +41,15 @@ end
 function benchmark(;
     num_problems = 10,
     num_samples_per_problem = 100,
-    num_primals = 10,
-    num_inequalities = 10,
+    num_primals = 100,
+    num_inequalities = 100,
+    sparsity_rate = 0.9,
 )
     rng = Random.MersenneTwister(1)
 
     # Generate random problems and parameters.
     problems = @showprogress desc = "Generating test problems..." map(1:num_problems) do _
-        generate_test_problem(rng; num_primals, num_inequalities)
+        generate_test_problem(rng; num_primals, num_inequalities, sparsity_rate)
     end
 
     θs = map(1:num_samples_per_problem) do _

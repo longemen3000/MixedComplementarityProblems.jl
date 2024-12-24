@@ -1,4 +1,5 @@
 [deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 MixedComplementarityProblems = "6c9e26cb-9263-41b8-a6c6-f4ca104ccdcd"
 PATHSolver = "f5f7c340-0bb3-5c69-969a-41884d311d1b"
 ParametricMCPs = "9b992ff8-05bb-4ea1-b9d2-5ef72d82f7ad"
