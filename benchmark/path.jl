@@ -40,7 +40,7 @@ function benchmark(;
     rng = Random.MersenneTwister(1)
 
     # Generate random problems and parameters.
-    @showprogress desc = "Generating test problems..." problems = map(1:num_problems) do _
+    problems = @showprogress desc = "Generating test problems..." map(1:num_problems) do _
         problem = generate_test_problem(rng; num_primals, num_inequalities)
     end
 
@@ -49,7 +49,7 @@ function benchmark(;
     end
 
     # Generate corresponding MCPs.
-    @showprogress desc = "Generating IP MCPs... " ip_mcps = map(problems) do p
+    ip_mcps = @showprogress desc = "Generating IP MCPs... " map(problems) do p
         MixedComplementarityProblems.PrimalDualMCP(
             p.G,
             p.H;
@@ -59,13 +59,13 @@ function benchmark(;
         )
     end
 
-    @showprogress desc = "Generating PATH MCPs..." path_mcps = map(problems) do p
+    path_mcps = @showprogress desc = "Generating PATH MCPs..." map(problems) do p
         lower_bounds = [fill(-Inf, num_primals); fill(0, num_inequalities)]
         upper_bounds = fill(Inf, num_primals + num_inequalities)
         ParametricMCPs.ParametricMCP(p.K, lower_bounds, upper_bounds, num_primals)
     end
 
-    @showprogress desc = "Solving IP MCPs..." ip_times = map(ip_mcps) do mcp
+    ip_times = @showprogress desc = "Solving IP MCPs..." map(ip_mcps) do mcp
         # Make sure everything is compiled in a dry run.
         MixedComplementarityProblems.solve(
             MixedComplementarityProblems.InteriorPoint(),
@@ -85,7 +85,7 @@ function benchmark(;
         end
     end
 
-    @showprogress desc = "Solving PATH MCPs..." path_times = map(path_mcps) do mcp
+    path_times = @showprogress desc = "Solving PATH MCPs..." map(path_mcps) do mcp
         # Make sure everything is compiled in a dry run.
         ParametricMCPs.solve(mcp, zeros(num_primals))
 
