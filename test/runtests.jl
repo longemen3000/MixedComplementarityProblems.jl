@@ -18,7 +18,7 @@ using FiniteDiff: FiniteDiff
     b = [1; 1]
     θ = rand(2)
 
-    G(x, y; θ) = M * x - A' * y - θ
+    G(x, y; θ) = M * x - θ - A' * y
     H(x, y; θ) = A * x - b
     K(z; θ) = begin
         x = z[1:size(M, 1)]

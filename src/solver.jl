@@ -25,6 +25,10 @@ function solve(
     tol = 1e-4,
     max_inner_iters = 20,
     max_outer_iters = 50,
+    tightening_rate = 0.1,
+    loosening_rate = 0.5,
+    min_stepsize = 1e-2,
+    verbose = false,
 )
     # Set up common memory.
     ∇F = mcp.∇F_z!.result_buffer
@@ -52,14 +56,14 @@ function solve(
             # TODO! Can add some adaptive regularization.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            δz .= (∇F \ F) .* -1
+            δz .= ((∇F + tol * I) \ F) .* -1
 
             # Fraction to the boundary linesearch.
-            α_s = fraction_to_the_boundary_linesearch(s, δs; tol)
-            α_y = fraction_to_the_boundary_linesearch(y, δy; tol)
+            α_s = fraction_to_the_boundary_linesearch(s, δs; tol = min_stepsize)
+            α_y = fraction_to_the_boundary_linesearch(y, δy; tol = min_stepsize)
 
             if isnan(α_s) || isnan(α_y)
-                @warn "Linesearch failed. Exiting prematurely."
+                verbose && @warn "Linesearch failed. Exiting prematurely."
                 status = :failed
                 break
             end
@@ -73,7 +77,9 @@ function solve(
             inner_iters += 1
         end
 
-        ϵ *= (status == :solved) ? 1 - exp(-inner_iters) : 1 + exp(-inner_iters)
+        ϵ *=
+            (status == :solved) ? 1 - exp(-tightening_rate * inner_iters) :
+            1 + exp(-loosening_rate * inner_iters)
         outer_iters += 1
     end
 
