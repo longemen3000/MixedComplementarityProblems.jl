@@ -67,8 +67,8 @@ end
 "Benchmark interior point solver against PATH on a bunch of random QPs."
 function benchmark(;
     num_samples = 1000,
-    num_primals = 200,
-    num_inequalities = 200,
+    num_primals = 100,
+    num_inequalities = 100,
     sparsity_rate = 0.9,
     ip_mcp = nothing,
     path_mcp = nothing,

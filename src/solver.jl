@@ -27,6 +27,7 @@ function solve(
     max_outer_iters = 50,
     tightening_rate = 1,
     loosening_rate = 1,
+    min_stepsize = 1e-2,
     verbose = false,
 )
     # Set up common memory.
@@ -58,8 +59,8 @@ function solve(
             δz .= ((∇F + tol * I) \ F) .* -1
 
             # Fraction to the boundary linesearch.
-            α_s = fraction_to_the_boundary_linesearch(s, δs; tol)
-            α_y = fraction_to_the_boundary_linesearch(y, δy; tol)
+            α_s = fraction_to_the_boundary_linesearch(s, δs; tol = min_stepsize)
+            α_y = fraction_to_the_boundary_linesearch(y, δy; tol = min_stepsize)
 
             if isnan(α_s) || isnan(α_y)
                 verbose && @warn "Linesearch failed. Exiting prematurely."
