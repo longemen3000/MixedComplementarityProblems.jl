@@ -119,7 +119,7 @@ function benchmark(;
     )
 
     @info "Warming up PATH solver..."
-    ParametricMCPs.solve(path_mcp, first(θs))
+    ParametricMCPs.solve(path_mcp, first(θs); warn_on_convergence_failure = false)
 
     # Solve and time.
     ip_data = @showprogress desc = "Solving IP MCPs..." map(θs) do θ
@@ -134,7 +134,8 @@ function benchmark(;
 
     path_data = @showprogress desc = "Solving PATH MCPs..." map(θs) do θ
         # Solve and time.
-        elapsed_time = @elapsed sol = ParametricMCPs.solve(path_mcp, θ)
+        elapsed_time = @elapsed sol =
+            ParametricMCPs.solve(path_mcp, θ; warn_on_convergence_failure = false)
 
         (; elapsed_time, success = sol.status == PATHSolver.MCP_Solved)
     end
