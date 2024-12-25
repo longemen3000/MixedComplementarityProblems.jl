@@ -25,8 +25,8 @@ function solve(
     tol = 1e-4,
     max_inner_iters = 20,
     max_outer_iters = 50,
-    tightening_rate = 1,
-    loosening_rate = 1,
+    tightening_rate = 0.1,
+    loosening_rate = 0.5,
     min_stepsize = 1e-2,
     verbose = false,
 )
