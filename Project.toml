@@ -11,7 +11,6 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SymbolicTracingUtils = "77ddf47f-b2ab-4ded-95ee-54f4fa148129"
-TrajectoryGamesBase = "ac1ac542-73eb-4349-ae1b-660ab3609574"
 
 [compat]
 BlockArrays = "0.16.43, 1"
@@ -22,7 +21,6 @@ ForwardDiff = "0.10.38"
 LinearAlgebra = "1.11.0"
 SparseArrays = "1.11.0"
 SymbolicTracingUtils = "0.1.1"
-TrajectoryGamesBase = "0.3.10"
 Zygote = "0.6.73"
 julia = "1.11"
 

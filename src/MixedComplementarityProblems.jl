@@ -2,9 +2,10 @@ module MixedComplementarityProblems
 
 using SparseArrays: SparseArrays
 using LinearAlgebra: LinearAlgebra, I, norm, eigvals
-using BlockArrays: blocks, blocksizes
-using TrajectoryGamesBase: to_blockvector
+using BlockArrays: blocks, blocksizes, BlockArray
 using SymbolicTracingUtils: SymbolicTracingUtils as SymbolicTracingUtils
+
+to_blockvector(block_dimensions) = Base.Fix2(BlockArray,block_dimensions)
 
 include("mcp.jl")
 include("solver.jl")
