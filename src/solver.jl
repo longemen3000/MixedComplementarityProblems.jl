@@ -14,6 +14,23 @@ and for `y` it chooses step size `α_s` such that
 A typical value of τ is 0.995. Once we converge to ||F(z; \epsilon)|| ≤ ϵ,
 we typically decrease ϵ by a factor of 0.1 or 0.2, with smaller values chosen
 when the previous subproblem is solved in fewer iterations.
+
+Positional arguments:
+    - `mcp::PrimalDualMCP`: the mixed complementarity problem to solve.
+    - `θ::AbstractVector{<:Real}`: the parameter vector.
+    - `x₀::AbstractVector{<:Real}`: the initial primal variable.
+    - `y₀::AbstractVector{<:Real}`: the initial dual variable.
+    - `s₀::AbstractVector{<:Real}`: the initial slack variable.
+
+Keyword arguments:
+    - `tol::Real = 1e-4`: the tolerance for the KKT error.
+    - `max_inner_iters::Int = 20`: the maximum number of inner iterations.
+    - `max_outer_iters::Int = 50`: the maximum number of outer iterations.
+    - `tightening_rate::Real = 0.1`: the rate at which to tighten the tolerance.
+    - `loosening_rate::Real = 0.5`: the rate at which to loosen the tolerance.
+    - `min_stepsize::Real = 1e-2`: the minimum step size for the linesearch.
+    - `verbose::Bool = false`: whether to print debug information.
+    - `linear_solve_algorithm::KrylovJL_GMRES()`: the linear solve algorithm to use. Any solver from `LinearSolve.jl` can be used.
 """
 function solve(
     ::InteriorPoint,
@@ -29,6 +46,7 @@ function solve(
     loosening_rate = 0.5,
     min_stepsize = 1e-2,
     verbose = false,
+    linear_solve_algorithm = KrylovJL_GMRES(),
 )
     # Set up common memory.
     ∇F = mcp.∇F_z!.result_buffer
@@ -39,7 +57,7 @@ function solve(
         @view δz[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
     δs = @view δz[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
 
-    linear_solver = GmresSolver(∇F, F)
+    linsolve = init(LinearProblem(∇F, δz), linear_solve_algorithm)
 
     # Main solver loop.
     x = x₀
@@ -59,12 +77,10 @@ function solve(
             # TODO: use a linear operator with a lazy gradient computation here.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            gmres!(linear_solver, ∇F + tol * I, -F)
-            if !linear_solver.stats.solved || linear_solver.stats.inconsistent
-                status = :failed
-                break
-            end
-            δz .= linear_solver.x
+            linsolve.A = ∇F + tol * I
+            linsolve.b = -F
+            solution = solve!(linsolve)
+            δz .= solution.u
 
             # Fraction to the boundary linesearch.
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol = min_stepsize)
