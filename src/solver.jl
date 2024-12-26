@@ -39,6 +39,8 @@ function solve(
         @view δz[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
     δs = @view δz[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
 
+    linear_solver = GmresSolver(∇F, F)
+
     # Main solver loop.
     x = x₀
     y = y₀
@@ -53,10 +55,16 @@ function solve(
 
         while kkt_error > ϵ && inner_iters < max_inner_iters
             # Compute the Newton step.
-            # TODO! Can add some adaptive regularization.
+            # TODO: Can add some adaptive regularization.
+            # TODO: use a linear operator with a lazy gradient computation here.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            δz .= ((∇F + tol * I) \ F) .* -1
+            gmres!(linear_solver, ∇F + tol * I, -F)
+            if !linear_solver.stats.solved || linear_solver.stats.inconsistent
+                status = :failed
+                break
+            end
+            δz .= linear_solver.x
 
             # Fraction to the boundary linesearch.
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol = min_stepsize)
@@ -78,7 +86,7 @@ function solve(
         end
 
         ϵ *=
-            (status == :solved) ? 1 - exp(-tightening_rate * inner_iters) :
+            (status === :solved) ? 1 - exp(-tightening_rate * inner_iters) :
             1 + exp(-loosening_rate * inner_iters)
         outer_iters += 1
     end
