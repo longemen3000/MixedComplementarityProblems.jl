@@ -80,12 +80,6 @@ function solve(
             linsolve.A = ∇F + tol * I
             linsolve.b = -F
             solution = solve!(linsolve)
-            if !SciMLBase.successful_retcode(solution)
-                verbose && @warn "Linear solve failed. Exiting prematurely."
-                status = :failed
-                break
-            end
-
             δz .= solution.u
 
             # Fraction to the boundary linesearch.
