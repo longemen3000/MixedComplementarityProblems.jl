@@ -14,6 +14,23 @@ and for `y` it chooses step size `α_s` such that
 A typical value of τ is 0.995. Once we converge to ||F(z; \epsilon)|| ≤ ϵ,
 we typically decrease ϵ by a factor of 0.1 or 0.2, with smaller values chosen
 when the previous subproblem is solved in fewer iterations.
+
+Positional arguments:
+    - `mcp::PrimalDualMCP`: the mixed complementarity problem to solve.
+    - `θ::AbstractVector{<:Real}`: the parameter vector.
+    - `x₀::AbstractVector{<:Real}`: the initial primal variable.
+    - `y₀::AbstractVector{<:Real}`: the initial dual variable.
+    - `s₀::AbstractVector{<:Real}`: the initial slack variable.
+
+Keyword arguments:
+    - `tol::Real = 1e-4`: the tolerance for the KKT error.
+    - `max_inner_iters::Int = 20`: the maximum number of inner iterations.
+    - `max_outer_iters::Int = 50`: the maximum number of outer iterations.
+    - `tightening_rate::Real = 0.1`: the rate at which to tighten the tolerance.
+    - `loosening_rate::Real = 0.5`: the rate at which to loosen the tolerance.
+    - `min_stepsize::Real = 1e-2`: the minimum step size for the linesearch.
+    - `verbose::Bool = false`: whether to print debug information.
+    - `linear_solve_algorithm::KrylovJL_GMRES()`: the linear solve algorithm to use. Any solver from `LinearSolve.jl` can be used.
 """
 function solve(
     ::InteriorPoint,
@@ -29,6 +46,7 @@ function solve(
     loosening_rate = 0.5,
     min_stepsize = 1e-2,
     verbose = false,
+    linear_solve_algorithm = KrylovJL_GMRES(),
 )
     # Set up common memory.
     ∇F = mcp.∇F_z!.result_buffer
@@ -38,6 +56,8 @@ function solve(
     δy =
         @view δz[(mcp.unconstrained_dimension + 1):(mcp.unconstrained_dimension + mcp.constrained_dimension)]
     δs = @view δz[(mcp.unconstrained_dimension + mcp.constrained_dimension + 1):end]
+
+    linsolve = init(LinearProblem(∇F, δz), linear_solve_algorithm)
 
     # Main solver loop.
     x = x₀
@@ -53,10 +73,20 @@ function solve(
 
         while kkt_error > ϵ && inner_iters < max_inner_iters
             # Compute the Newton step.
-            # TODO! Can add some adaptive regularization.
+            # TODO: Can add some adaptive regularization.
+            # TODO: use a linear operator with a lazy gradient computation here.
             mcp.F!(F, x, y, s; θ, ϵ)
             mcp.∇F_z!(∇F, x, y, s; θ, ϵ)
-            δz .= ((∇F + tol * I) \ F) .* -1
+            linsolve.A = ∇F + tol * I
+            linsolve.b = -F
+            solution = solve!(linsolve)
+            if !SciMLBase.successful_retcode(solution)
+                verbose && @warn "Linear solve failed. Exiting prematurely."
+                status = :failed
+                break
+            end
+
+            δz .= solution.u
 
             # Fraction to the boundary linesearch.
             α_s = fraction_to_the_boundary_linesearch(s, δs; tol = min_stepsize)
@@ -78,7 +108,7 @@ function solve(
         end
 
         ϵ *=
-            (status == :solved) ? 1 - exp(-tightening_rate * inner_iters) :
+            (status === :solved) ? 1 - exp(-tightening_rate * inner_iters) :
             1 + exp(-loosening_rate * inner_iters)
         outer_iters += 1
     end

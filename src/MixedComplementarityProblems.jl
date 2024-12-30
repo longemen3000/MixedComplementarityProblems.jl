@@ -4,6 +4,8 @@ using SparseArrays: SparseArrays
 using LinearAlgebra: LinearAlgebra, I, norm, eigvals
 using BlockArrays: blocks, blocksizes, BlockArray
 using SymbolicTracingUtils: SymbolicTracingUtils as SymbolicTracingUtils
+using LinearSolve: LinearProblem, init, solve!, KrylovJL_GMRES
+using SciMLBase: SciMLBase
 
 to_blockvector(block_dimensions) = Base.Fix2(BlockArray,block_dimensions)
 
